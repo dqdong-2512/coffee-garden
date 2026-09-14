@@ -1,0 +1,124 @@
+"use client";
+import { useState, type ReactNode } from "react";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
+import { Menu, Bell, ChevronDown, MapPin } from "lucide-react";
+import { OwnerSidebar } from "./owner-sidebar";
+import { navigation } from "./navigation";
+import { Modal } from "@/ui/core/modal";
+export function OwnerShell({ children }: { children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const [panel, setPanel] = useState<"notifications" | "user" | null>(null);
+  const path = usePathname();
+  const title =
+    navigation.flatMap((s) => s.items).find((i) => path === `/owner/${i.slug}`)
+      ?.title ?? "Overview";
+  return (
+    <div className="owner-shell">
+      <a className="skip-link" href="#main-content">
+        Skip to content
+      </a>
+      <aside className="desktop-sidebar">
+        <OwnerSidebar />
+      </aside>
+      {open && (
+        <Modal title="Navigation" drawer onClose={() => setOpen(false)}>
+          <OwnerSidebar onNavigate={() => setOpen(false)} />
+        </Modal>
+      )}
+      <div className="owner-body">
+        <header className="owner-header">
+          <div className="flex min-w-0 items-center gap-3">
+            <button
+              className="icon-button mobile-toggle"
+              aria-label="Open navigation"
+              aria-expanded={open}
+              onClick={() => setOpen(true)}
+            >
+              <Menu size={21} />
+            </button>
+            <span className="header-breadcrumb">
+              Workspace <span>/</span> <strong>{title}</strong>
+            </span>
+          </div>
+          <div className="flex items-center gap-2 sm:gap-4">
+            <label className="branch-control">
+              <MapPin size={15} />
+              <span className="sr-only">Branch</span>
+              <select aria-label="Branch">
+                <option>Coffee Garden - Main Branch</option>
+              </select>
+            </label>
+            <button
+              className="icon-button notification-button"
+              aria-label="Notifications"
+              aria-expanded={panel === "notifications"}
+              onClick={() =>
+                setPanel(panel === "notifications" ? null : "notifications")
+              }
+            >
+              <Bell size={19} />
+              <span />
+            </button>
+            <button
+              className="user-button"
+              aria-label="Owner menu"
+              aria-expanded={panel === "user"}
+              onClick={() => setPanel(panel === "user" ? null : "user")}
+            >
+              <span className="avatar">MA</span>
+              <span className="user-name">
+                Minh Anh<small>Owner</small>
+              </span>
+              <ChevronDown size={14} />
+            </button>
+          </div>
+        </header>
+        {panel && (
+          <Modal
+            title={
+              panel === "notifications" ? "Notifications" : "Owner workspace"
+            }
+            onClose={() => setPanel(null)}
+          >
+            <div className="p-6">
+              {panel === "notifications" ? (
+                <>
+                  <p className="font-medium">You’re all caught up</p>
+                  <p className="muted mt-2 text-sm">
+                    Live order and inventory notifications will appear here in a
+                    future release.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p>Minh Anh · Owner</p>
+                  <p className="muted my-3 text-sm">
+                    Coffee Garden — Main Branch
+                  </p>
+                  <Link
+                    href="/"
+                    className="button"
+                    onClick={() => setPanel(null)}
+                  >
+                    Development home
+                  </Link>
+                </>
+              )}
+            </div>
+          </Modal>
+        )}
+        <main id="main-content" className="owner-content">
+          {children}
+          <footer className="page-footer">
+            <span>© 2026 Coffee Garden</span>
+            <span>
+              Made for a better everyday.{" "}
+              <span className="ml-2 text-green-800">♧</span>
+            </span>
+          </footer>
+        </main>
+      </div>
+    </div>
+  );
+}
