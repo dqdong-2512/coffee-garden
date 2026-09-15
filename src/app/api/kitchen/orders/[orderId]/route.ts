@@ -1,5 +1,6 @@
 import { OrderServiceError } from "@/features/orders/services/order-errors";
 import { updateOrderStatus } from "@/features/orders/services/update-order-status";
+import { authorizeRequest } from "@/lib/auth/authorization";
 
 export const runtime = "nodejs";
 
@@ -7,6 +8,8 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ orderId: string }> },
 ) {
+  const auth = await authorizeRequest(request, ["OWNER", "KITCHEN"]);
+  if (auth.response) return auth.response;
   try {
     const origin = request.headers.get("origin");
     if (origin && origin !== new URL(request.url).origin) {

@@ -1,11 +1,21 @@
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
+import { hashPassword } from "../src/lib/auth/password";
 
 const connectionString = process.env.DIRECT_URL || process.env.DATABASE_URL;
 if (!connectionString) throw new Error("DATABASE_URL is required to seed the database.");
+const databaseUrl: string = connectionString;
 
-const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
+const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: databaseUrl }) });
+
+function isLocalDatabase(url: string) {
+  try {
+    return ["localhost", "127.0.0.1", "::1"].includes(new URL(url).hostname);
+  } catch {
+    return false;
+  }
+}
 
 const products = [
   ["food", "bun-bo-hue", "Bún bò Huế", "Nước dùng thơm sả, thịt bò mềm, chả và rau tươi.", 55000],
@@ -21,6 +31,40 @@ const products = [
 ] as const;
 
 async function seed() {
+  const local = isLocalDatabase(databaseUrl);
+  const ownerPassword = process.env.SEED_OWNER_PASSWORD || (local ? "coffee-owner-local" : "");
+  const kitchenPassword = process.env.SEED_KITCHEN_PASSWORD || (local ? "coffee-kitchen-local" : "");
+  if (!ownerPassword || !kitchenPassword) {
+    throw new Error(
+      "SEED_OWNER_PASSWORD and SEED_KITCHEN_PASSWORD are required for a non-local database.",
+    );
+  }
+
+  const [ownerHash, kitchenHash] = await Promise.all([
+    hashPassword(ownerPassword),
+    hashPassword(kitchenPassword),
+  ]);
+  await prisma.staffUser.upsert({
+    where: { username: process.env.SEED_OWNER_USERNAME || "owner" },
+    create: {
+      username: process.env.SEED_OWNER_USERNAME || "owner",
+      displayName: "Chủ quán",
+      passwordHash: ownerHash,
+      role: "OWNER",
+    },
+    update: { displayName: "Chủ quán", role: "OWNER", isActive: true },
+  });
+  await prisma.staffUser.upsert({
+    where: { username: process.env.SEED_KITCHEN_USERNAME || "kitchen" },
+    create: {
+      username: process.env.SEED_KITCHEN_USERNAME || "kitchen",
+      displayName: "Bếp & pha chế",
+      passwordHash: kitchenHash,
+      role: "KITCHEN",
+    },
+    update: { displayName: "Bếp & pha chế", role: "KITCHEN", isActive: true },
+  });
+
   const branch = await prisma.branch.upsert({
     where: { code: "MAIN" },
     create: { code: "MAIN", name: "Coffee Garden - Main Branch" },
@@ -65,5 +109,5 @@ async function seed() {
 }
 
 seed()
-  .then(() => console.log("Seed hoàn tất: MAIN, 2 danh mục, 10 món và bàn T01–T12."))
+  .then(() => console.log("Seed hoàn tất: 2 tài khoản, MAIN, 2 danh mục, 10 món và bàn T01–T12."))
   .finally(() => prisma.$disconnect());

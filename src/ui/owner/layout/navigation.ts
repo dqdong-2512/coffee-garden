@@ -11,7 +11,6 @@ import {
   Package,
   Armchair,
   Users,
-  Building2,
   ChartNoAxesCombined,
   ChartPie,
   Sunrise,
@@ -57,7 +56,6 @@ export const navigation = [
     items: [
       { title: "Tables", slug: "tables", icon: Armchair },
       { title: "Staff", slug: "staff", icon: Users },
-      { title: "Branches", slug: "branches", icon: Building2 },
     ],
   },
   {

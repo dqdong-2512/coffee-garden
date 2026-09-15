@@ -2,17 +2,32 @@
 import { useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Menu, Bell, ChevronDown, MapPin } from "lucide-react";
+import { Menu, Bell, ChevronDown } from "lucide-react";
 import { OwnerSidebar } from "./owner-sidebar";
 import { navigation } from "./navigation";
 import { Modal } from "@/ui/core/modal";
-export function OwnerShell({ children }: { children: ReactNode }) {
+import { LogoutButton } from "@/ui/auth/logout-button";
+import type { AuthenticatedUser } from "@/lib/auth/authorization";
+
+export function OwnerShell({
+  children,
+  user,
+}: {
+  children: ReactNode;
+  user: AuthenticatedUser;
+}) {
   const [open, setOpen] = useState(false);
   const [panel, setPanel] = useState<"notifications" | "user" | null>(null);
   const path = usePathname();
   const title =
     navigation.flatMap((s) => s.items).find((i) => path === `/owner/${i.slug}`)
       ?.title ?? "Overview";
+  const initials = user.displayName
+    .split(/\s+/)
+    .slice(-2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
   return (
     <div className="owner-shell">
       <a className="skip-link" href="#main-content">
@@ -42,13 +57,6 @@ export function OwnerShell({ children }: { children: ReactNode }) {
             </span>
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
-            <label className="branch-control">
-              <MapPin size={15} />
-              <span className="sr-only">Branch</span>
-              <select aria-label="Branch">
-                <option>Coffee Garden - Main Branch</option>
-              </select>
-            </label>
             <button
               className="icon-button notification-button"
               aria-label="Notifications"
@@ -66,9 +74,9 @@ export function OwnerShell({ children }: { children: ReactNode }) {
               aria-expanded={panel === "user"}
               onClick={() => setPanel(panel === "user" ? null : "user")}
             >
-              <span className="avatar">MA</span>
+              <span className="avatar">{initials}</span>
               <span className="user-name">
-                Minh Anh<small>Owner</small>
+                {user.displayName}<small>Owner</small>
               </span>
               <ChevronDown size={14} />
             </button>
@@ -92,17 +100,16 @@ export function OwnerShell({ children }: { children: ReactNode }) {
                 </>
               ) : (
                 <>
-                  <p>Minh Anh · Owner</p>
+                  <p>{user.displayName} · Owner</p>
                   <p className="muted my-3 text-sm">
-                    Coffee Garden — Main Branch
+                    @{user.username} · Coffee Garden
                   </p>
-                  <Link
-                    href="/"
-                    className="button"
-                    onClick={() => setPanel(null)}
-                  >
-                    Development home
-                  </Link>
+                  <div className="flex flex-wrap gap-2">
+                    <Link href="/" className="button" onClick={() => setPanel(null)}>
+                      Trang phát triển
+                    </Link>
+                    <LogoutButton />
+                  </div>
                 </>
               )}
             </div>

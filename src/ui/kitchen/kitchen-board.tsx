@@ -14,6 +14,8 @@ import {
   XCircle,
 } from "lucide-react";
 import type { KitchenOrder, OrderStatus } from "@/features/orders/types";
+import type { AuthenticatedUser } from "@/lib/auth/authorization";
+import { LogoutButton } from "@/ui/auth/logout-button";
 import { Modal } from "@/ui/core/modal";
 
 const columns: Array<{
@@ -58,9 +60,11 @@ function nextAction(status: OrderStatus) {
 export function KitchenBoard({
   initialOrders,
   databaseAvailable,
+  user,
 }: {
   initialOrders: KitchenOrder[];
   databaseAvailable: boolean;
+  user: AuthenticatedUser;
 }) {
   const [orders, setOrders] = useState(initialOrders);
   const [connected, setConnected] = useState(databaseAvailable);
@@ -176,6 +180,7 @@ export function KitchenBoard({
           <span><b>{itemCount}</b> món cần làm</span>
         </div>
         <div className="kitchen-tools">
+          <span className="kitchen-user">{user.displayName}</span>
           <span className={connected ? "kitchen-connected" : "kitchen-disconnected"}>
             {connected ? "Đang kết nối" : "Mất kết nối"}
           </span>
@@ -193,6 +198,7 @@ export function KitchenBoard({
             <RefreshCw size={17} />
           </button>
           <strong className="kitchen-clock">{time}</strong>
+          <LogoutButton compact />
         </div>
       </header>
 

@@ -51,11 +51,11 @@ export function DevHome() {
     ["Expenses", "/owner/expenses", "Keep business spending in view."],
     ["Profit", "/owner/profit", "Understand what your business keeps."],
     ["POS", "/pos", "A future workspace for your team."],
-    ["Kitchen", "/kitchen", "A future home for every order."],
+    ["Kitchen", "/kitchen", "Prepare and serve live orders."],
     [
       "Customer Order T12",
       "/order/T12",
-      "A future table-side ordering experience.",
+      "Open the live table-side ordering experience.",
     ],
   ];
   return (
@@ -66,7 +66,7 @@ export function DevHome() {
       </div>
       <PageHeader
         title="A good day starts here."
-        description="Development workspace · Step 1 · Owner app foundation"
+        description="Development workspace · Step 4 · Auth and shop management"
       />
       <div className="dev-grid">
         {links.map(([title, url, description], i) => (
@@ -76,13 +76,13 @@ export function DevHome() {
             <h2>Open {title}</h2>
             <p className="muted text-sm">{description}</p>
             <span className="mt-5 block text-xs text-stone-500">
-              {i < 4 ? "UI preview" : "Planned module"}
+              {i === 4 ? "Planned module" : "Live module"}
             </span>
           </Link>
         ))}
       </div>
       <p className="mock-note mt-8">
-        Development navigation only. All figures are mock data.
+        Development navigation. Operational modules use PostgreSQL; analytics remain preview data.
       </p>
     </main>
   );

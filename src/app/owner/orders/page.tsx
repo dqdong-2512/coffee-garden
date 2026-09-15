@@ -1,4 +1,5 @@
 import { listOwnerOrders } from "@/features/orders/queries/list-owner-orders";
+import { requirePageUser } from "@/lib/auth/authorization";
 import { OrdersScreen } from "@/ui/owner/orders/orders-screen";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +14,7 @@ async function loadOrders() {
 }
 
 export default async function Page() {
+  await requirePageUser(["OWNER"], "/owner/orders");
   const orders = await loadOrders();
   if (orders) return <OrdersScreen orders={orders} />;
   return (

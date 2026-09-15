@@ -1,6 +1,6 @@
 # Coffee Garden
 
-Coffee Garden is a Next.js 16 application for table ordering and café operations. The current implementation includes the Owner dashboard foundation plus a real customer ordering flow backed by PostgreSQL.
+Coffee Garden is a Next.js 16 application for one café, with table ordering and day-to-day operations backed by PostgreSQL.
 
 ## What works
 
@@ -12,6 +12,8 @@ Coffee Garden is a Next.js 16 application for table ordering and café operation
 - Kitchen board at `/kitchen` with four-second refresh, optional new-order sound, persisted status transitions, and cancellation reasons.
 - Customer receipts automatically track kitchen progress through served or cancelled.
 - Real order list and expandable order details at `/owner/orders`.
+- Staff login with role checks for Owner and Kitchen, signed 12-hour `HttpOnly` sessions, and `scrypt` password hashes.
+- Owner management for products, categories, availability, prices, tables, and a downloadable QR for each table.
 
 ## Local setup with Supabase and Docker
 
@@ -39,6 +41,15 @@ npm run db:deploy
 npm run db:seed
 ```
 
+The local seed creates these review accounts:
+
+| Role | Username | Password |
+| --- | --- | --- |
+| Owner | `owner` | `coffee-owner-local` |
+| Kitchen | `kitchen` | `coffee-kitchen-local` |
+
+These credentials are for local review only. Change `AUTH_SESSION_SECRET`, `SEED_OWNER_PASSWORD`, and `SEED_KITCHEN_PASSWORD` before connecting a hosted database. Seed passwords create missing accounts and do not overwrite an existing account's password.
+
 The first `db:start` downloads the required Docker images and can take several minutes. Prisma is the only migration authority in this repository; Supabase's own migration and seed runners are disabled in `supabase/config.toml`.
 
 Start the web app:
@@ -50,9 +61,13 @@ npm run dev
 Open these pages:
 
 - [Customer ordering at table T12](http://localhost:3000/order/T12)
+- [Staff login](http://localhost:3000/login)
 - [Kitchen workflow](http://localhost:3000/kitchen)
 - [Persisted orders for Owner](http://localhost:3000/owner/orders)
 - [Owner dashboard](http://localhost:3000/owner/dashboard)
+- [Product management](http://localhost:3000/owner/products)
+- [Category management](http://localhost:3000/owner/categories)
+- [Table and QR management](http://localhost:3000/owner/tables)
 - [Local Supabase Studio](http://127.0.0.1:54323)
 
 Valid seeded table codes are `T01` through `T12`. The local PostgreSQL connection is `postgresql://postgres:postgres@127.0.0.1:54322/postgres` and is already present in `.env.example`.
@@ -61,15 +76,16 @@ Valid seeded table codes are `T01` through `T12`. The local PostgreSQL connectio
 
 Use this short acceptance flow:
 
-1. Open `/order/T12` at a mobile viewport.
-2. Add 1 bún bò Huế and 2 cà phê sữa. The expected total is **115.000 ₫**.
-3. Open the cart, add optional notes, and submit the order.
-4. Verify the receipt displays an order number such as `CG-YYYYMMDD-0001`.
-5. Keep the receipt open and open `/kitchen` in another tab. Move the order through **Mới → Đang làm → Sẵn sàng → Đã phục vụ**.
-6. Verify the customer receipt updates automatically after each kitchen change.
-7. Open `/owner/orders` and verify the same order, item details, status, and total appear after a refresh.
-8. Create another order and cancel it in Kitchen; a reason is required and appears on the customer receipt.
-9. Optionally inspect the `Order` and `OrderItem` rows in Supabase Studio.
+1. Open `/owner/dashboard`; verify the app redirects to `/login`.
+2. Sign in as `owner` and open Products, Categories, and Tables from the sidebar.
+3. Change a product to **Tạm hết**, then open `/order/T12` in a private window and verify that the product is hidden. Turn it back on after review.
+4. Open Tables → **Xem QR** for T12. Download the SVG or open its menu link.
+5. Sign out, sign in as `kitchen`, and verify `/kitchen` opens while `/owner/dashboard` redirects back to Kitchen.
+6. Open `/order/T12` at a mobile viewport.
+7. Add 1 bún bò Huế and 2 cà phê sữa. The expected total is **115.000 ₫**.
+8. Submit the order, then move it in Kitchen through **Mới → Đang làm → Sẵn sàng → Đã phục vụ**.
+9. Verify the customer receipt updates after each change and the completed order appears in Owner → Orders.
+10. Create another order and cancel it in Kitchen; a reason is required and appears on the customer receipt.
 
 The API ignores prices sent by a browser and resolves current prices from PostgreSQL. Re-sending the same `clientRequestId` returns the original order instead of creating a duplicate.
 
@@ -104,13 +120,15 @@ With local Supabase already started, migrated, and seeded:
 npm run test:db
 ```
 
-The database test creates a real 115.000 ₫ order, verifies idempotent replay, stored line items, ordered status transitions, served timestamps, and cancellation reasons, then removes its test orders.
+The test suite also verifies password hashing, signed-session tamper rejection, safe login redirects, and menu/table validation. The database test creates a real 115.000 ₫ order, verifies idempotent replay, stored line items, ordered status transitions, served timestamps, and cancellation reasons, then removes its test orders.
 
 ## Project structure
 
 - `src/app`: App Router pages and the `POST /api/orders` route handler.
 - `src/features/catalog`: customer catalog query and view types.
 - `src/features/orders`: validation, calculations, transaction service, and read queries.
+- `src/features/auth`: login validation; `src/lib/auth` contains password, session, and authorization code.
+- `src/features/management`: Owner menu/table queries, validation, and database services.
 - `src/ui/order`: mobile customer menu, cart, and receipt UI.
 - `src/ui/kitchen`: live operational board for preparing and serving orders.
 - `src/ui/owner`: responsive Owner workspace and persisted order table.
@@ -122,4 +140,4 @@ The database test creates a real 115.000 ₫ order, verifies idempotent replay, 
 
 Use Vercel preview deployments while testing and a managed Supabase PostgreSQL project in Southeast Asia (Singapore) to keep the database close to customers in Vietnam. Vercel Hobby is restricted to personal, non-commercial use, so move the live shop to Pro or another commercial host. See the official [Vercel plan guidance](https://vercel.com/docs/plans/hobby) and [Supabase region list](https://supabase.com/docs/guides/platform/regions).
 
-Set `DATABASE_URL` to the pooled runtime URL and `DIRECT_URL` to the direct database URL used by Prisma migrations, following [Prisma's connection guidance](https://www.prisma.io/docs/orm/prisma-client/setup-and-configuration/databases-connections). Run `npm run db:deploy` during the release process. Before using the app in a real shop, add authentication and role checks; `/owner` and `/kitchen` are intentionally unprotected during local review.
+Set `DATABASE_URL` to the pooled runtime URL and `DIRECT_URL` to the direct database URL used by Prisma migrations, following [Prisma's connection guidance](https://www.prisma.io/docs/orm/prisma-client/setup-and-configuration/databases-connections). Set `PUBLIC_APP_URL` to the public HTTPS origin so downloaded table QR codes point to the production site. Use unique production staff passwords and a random `AUTH_SESSION_SECRET` of at least 32 characters, then run `npm run db:deploy` and `npm run db:seed` during the first release.
