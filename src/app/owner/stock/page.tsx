@@ -1,11 +1,7 @@
-import { Placeholder } from "@/ui/placeholder";
+import { listIngredients, listStockMovements } from "@/features/inventory/queries";
+import { StockScreen } from "@/ui/owner/inventory/stock-screen";
 export const metadata = { title: "Stock" };
-export default function Page() {
-  return (
-    <Placeholder
-      owner
-      title="Stock"
-      description="Monitor stock levels and movements."
-    />
-  );
+export default async function Page() {
+  const [ingredients, movements] = await Promise.all([listIngredients(), listStockMovements()]);
+  return <StockScreen ingredients={ingredients} movements={movements} />;
 }

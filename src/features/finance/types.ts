@@ -15,9 +15,12 @@ export type FinanceReport = {
   paymentCount: number;
   averageOrderValue: number;
   expenses: number;
+  cogs: number;
+  grossProfit: number;
   ingredientExpenses: number;
   operatingExpenses: number;
   estimatedProfit: number;
+  cashFlow: number;
   revenueSeries: RevenuePoint[];
   profitSeries: RevenuePoint[];
   hourlyRevenue: RevenuePoint[];

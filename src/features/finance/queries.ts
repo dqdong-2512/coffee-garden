@@ -36,6 +36,7 @@ export async function getFinanceReport(rawFrom?: string, rawTo?: string): Promis
     }),
   ]);
   const revenue = payments.reduce((sum, payment) => sum + payment.amount, 0);
+  const cogs = payments.reduce((sum, payment) => sum + payment.order.costAmount, 0);
   const expenseTotal = expenses.reduce((sum, expense) => sum + expense.amount, 0);
   const ingredientExpenses = expenses.filter((expense) => expense.category === "INGREDIENT").reduce((sum, expense) => sum + expense.amount, 0);
   const byDate = new Map<string, number>();
@@ -70,9 +71,10 @@ export async function getFinanceReport(rawFrom?: string, rawTo?: string): Promis
   return {
     period, revenue, paymentCount: payments.length,
     averageOrderValue: payments.length ? Math.round(revenue / payments.length) : 0,
-    expenses: expenseTotal, ingredientExpenses,
+    expenses: expenseTotal, cogs, grossProfit: revenue - cogs, ingredientExpenses,
     operatingExpenses: expenseTotal - ingredientExpenses,
-    estimatedProfit: revenue - expenseTotal,
+    estimatedProfit: revenue - cogs - (expenseTotal - ingredientExpenses),
+    cashFlow: revenue - expenseTotal,
     revenueSeries: dateRange(period.from, period.to).map((date) => ({ name: date.slice(5).split("-").reverse().join("/"), revenue: byDate.get(date) ?? 0 })),
     profitSeries: dateRange(period.from, period.to).map((date) => ({
       name: date.slice(5).split("-").reverse().join("/"),

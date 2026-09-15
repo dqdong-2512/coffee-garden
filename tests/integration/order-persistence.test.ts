@@ -29,6 +29,11 @@ test("persists an order atomically and replays the same request", async (context
   const first = await createCustomerOrder(input);
   const createdIds = [first.order.id];
   context.after(async () => {
+    const movements = await prisma.stockMovement.findMany({ where: { orderId: { in: createdIds } } });
+    for (const movement of movements) {
+      await prisma.ingredient.update({ where: { id: movement.ingredientId }, data: { currentQuantity: { increment: -movement.quantity } } });
+    }
+    await prisma.stockMovement.deleteMany({ where: { orderId: { in: createdIds } } });
     await prisma.order.deleteMany({ where: { id: { in: createdIds } } });
     await prisma.$disconnect();
   });
@@ -68,6 +73,10 @@ test("persists an order atomically and replays the same request", async (context
     where: { id: first.order.id },
   });
   assert.ok(served.servedAt);
+  assert.equal(served.costAmount, 36_300);
+  const consumption = await prisma.stockMovement.findMany({ where: { orderId: first.order.id } });
+  assert.equal(consumption.length, 4);
+  assert.equal(consumption.reduce((sum, movement) => sum + movement.totalCost, 0), served.costAmount);
 
   const cancellation = await createCustomerOrder({
     ...input,

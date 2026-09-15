@@ -721,6 +721,14 @@ textarea {
   display: grid;
   gap: 19px;
 }
+.recipe-form { max-height: min(680px, calc(100dvh - 100px)); }
+.recipe-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; max-height: 330px; overflow: auto; padding: 2px; }
+.inventory-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.inventory-actions button { display: flex; align-items: center; justify-content: center; gap: 7px; padding: 11px; border: 1px solid var(--border); border-radius: 8px; background: white; color: var(--muted); }
+.inventory-actions button.active { color: #527041; background: #eef3e8; border-color: #bdcdb0; }
+.icon-action { display: inline-flex; padding: 8px; border-radius: 7px; color: #65705d; background: #f4f3ef; }
+.stock-positive { color: #527041; font-weight: 600; }
+.stock-negative { color: #a0443c; font-weight: 600; }
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

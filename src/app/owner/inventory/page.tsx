@@ -1,11 +1,7 @@
-import { Placeholder } from "@/ui/placeholder";
+import { listIngredients, listRecipes } from "@/features/inventory/queries";
+import { InventoryScreen } from "@/ui/owner/inventory/inventory-screen";
 export const metadata = { title: "Ingredients" };
-export default function Page() {
-  return (
-    <Placeholder
-      owner
-      title="Ingredients"
-      description="Track ingredients, usage, and replenishment."
-    />
-  );
+export default async function Page() {
+  const [ingredients, recipes] = await Promise.all([listIngredients(), listRecipes()]);
+  return <InventoryScreen ingredients={ingredients} recipes={recipes} />;
 }

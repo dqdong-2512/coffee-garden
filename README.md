@@ -17,7 +17,9 @@ Coffee Garden is a Next.js 16 application for one café, with table ordering and
 - Staff POS at `/pos` for Owner/Cashier, using the live menu to create persisted orders that appear in Kitchen.
 - Manual cash and bank-transfer collection with server-derived amounts, staff attribution, idempotency, and Owner reconciliation.
 - Persisted expense entry with category, supplier, payment method, date, and Owner attribution.
-- Live Owner dashboard, revenue, expense, and estimated profit reports calculated from paid invoices and recorded expenses.
+- Live Owner dashboard, revenue, expense, and estimated profit reports calculated from paid invoices, served-order recipe costs, and operating expenses.
+- Ingredient catalog, base units, low-stock thresholds, stock receipts, physical-count adjustments, and an auditable movement ledger.
+- Per-product recipes with automatic stock consumption and historical food-cost snapshots when Kitchen marks an order served.
 
 ## Local setup with Supabase and Docker
 
@@ -74,6 +76,8 @@ Open these pages:
 - [Revenue report](http://localhost:3000/owner/revenue)
 - [Expense management](http://localhost:3000/owner/expenses)
 - [Estimated profit](http://localhost:3000/owner/profit)
+- [Ingredients and recipes](http://localhost:3000/owner/inventory)
+- [Stock movements](http://localhost:3000/owner/stock)
 - [Product management](http://localhost:3000/owner/products)
 - [Category management](http://localhost:3000/owner/categories)
 - [Table and QR management](http://localhost:3000/owner/tables)
@@ -99,8 +103,11 @@ Use this short acceptance flow:
 12. Verify the customer receipt updates after each change and the completed order appears in Owner → Orders.
 13. In Owner → Expenses, add a small test expense and reload the page to verify that it persists.
 14. Open Dashboard, Revenue, and Profit. Verify that PAID collections and the new expense appear in the selected period.
+15. Open Ingredients, review a product recipe, and save a small change if desired.
+16. Open Stock, record a stock receipt or physical count, and verify that it remains after reload.
+17. Serve an order in Kitchen and verify Stock contains one automatic consumption row per ingredient used by that order.
 
-The API ignores prices sent by a browser and resolves current prices from PostgreSQL. Re-sending the same `clientRequestId` returns the original order instead of creating a duplicate. Step 6 profit is a cash-flow estimate: paid revenue minus expenses recorded in the same period. Ingredient purchases are not yet inventory consumption or accounting COGS.
+The API ignores prices sent by a browser and resolves current prices from PostgreSQL. Re-sending the same `clientRequestId` returns the original order instead of creating a duplicate. Estimated profit uses the recipe cost captured when an order is served, then subtracts non-ingredient operating expenses. Ingredient purchases remain visible in expenses and cash flow without being deducted twice from estimated profit.
 
 ## Database commands
 
@@ -133,7 +140,7 @@ With local Supabase already started, migrated, and seeded:
 npm run test:db
 ```
 
-The test suite also verifies password hashing, signed-session tamper rejection, safe login redirects, menu/table/expense validation, period normalization, and the payment trust boundary. Database tests cover QR and POS persistence, idempotent order creation, ordered kitchen transitions, payment amount derivation, payment reversal, staff attribution, expense persistence, and cash-flow aggregation, then remove their test records.
+The test suite also verifies password hashing, signed-session tamper rejection, safe login redirects, menu/table/expense/inventory validation, period normalization, and the payment trust boundary. Database tests cover QR and POS persistence, idempotent order creation, ordered kitchen transitions, automatic recipe consumption and cost snapshots, payment amount derivation, payment reversal, staff attribution, expense persistence, and financial aggregation, then remove their test records.
 
 ## Project structure
 
@@ -145,6 +152,7 @@ The test suite also verifies password hashing, signed-session tamper rejection, 
 - `src/features/pos`: POS catalog and payment-order views.
 - `src/features/payments`: payment validation and transactional collection/reversal services.
 - `src/features/finance`: expense validation/persistence, reporting periods, and live financial aggregation.
+- `src/features/inventory`: ingredient, recipe, stock movement, and inventory valuation logic.
 - `src/ui/order`: mobile customer menu, cart, and receipt UI.
 - `src/ui/kitchen`: live operational board for preparing and serving orders.
 - `src/ui/owner`: responsive Owner workspace and persisted order table.

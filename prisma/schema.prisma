@@ -48,6 +48,18 @@ enum ExpenseCategory {
   OTHER
 }
 
+enum IngredientUnit {
+  GRAM
+  MILLILITER
+  PIECE
+}
+
+enum StockMovementType {
+  STOCK_IN
+  ADJUSTMENT
+  CONSUMPTION
+}
+
 model StaffUser {
   id           String    @id @default(uuid()) @db.Uuid
   username     String    @unique
@@ -59,6 +71,7 @@ model StaffUser {
   updatedAt    DateTime  @updatedAt
   payments     Payment[]
   expenses     Expense[]
+  stockMovements StockMovement[]
 
   @@index([role, isActive])
 }
@@ -78,6 +91,8 @@ model Branch {
   dailyCounters OrderDailyCounter[]
   payments      Payment[]
   expenses      Expense[]
+  ingredients   Ingredient[]
+  stockMovements StockMovement[]
 }
 
 model Category {
@@ -112,6 +127,7 @@ model Product {
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
   orderItems   OrderItem[]
+  recipeItems  RecipeItem[]
 
   @@unique([branchId, slug])
   @@index([branchId, categoryId, isAvailable])
@@ -152,6 +168,7 @@ model Order {
   source             OrderSource @default(CUSTOMER_QR)
   subtotal           Int
   totalAmount        Int
+  costAmount         Int         @default(0)
   customerNote       String?
   statusUpdatedAt    DateTime    @default(now())
   servedAt           DateTime?
@@ -163,6 +180,7 @@ model Order {
   table              DiningTable @relation(fields: [tableId, branchId], references: [id, branchId], onDelete: Restrict)
   items              OrderItem[]
   payment            Payment?
+  stockMovements     StockMovement[]
 
   @@unique([branchId, clientRequestId])
   @@unique([branchId, orderNo])
@@ -231,4 +249,60 @@ model OrderItem {
 
   @@index([orderId])
   @@index([productId])
+}
+
+model Ingredient {
+  id                String         @id @default(uuid()) @db.Uuid
+  branchId          String         @db.Uuid
+  name              String
+  slug              String
+  unit              IngredientUnit
+  currentQuantity   Int            @default(0)
+  lowStockThreshold Int            @default(0)
+  costPerUnit       Int            @default(0)
+  isActive          Boolean        @default(true)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  branch            Branch         @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  recipeItems       RecipeItem[]
+  stockMovements    StockMovement[]
+
+  @@unique([branchId, slug])
+  @@index([branchId, isActive])
+}
+
+model RecipeItem {
+  id           String     @id @default(uuid()) @db.Uuid
+  productId    String     @db.Uuid
+  ingredientId String     @db.Uuid
+  quantity     Int
+  product      Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
+
+  @@unique([productId, ingredientId])
+  @@index([ingredientId])
+}
+
+model StockMovement {
+  id            String            @id @default(uuid()) @db.Uuid
+  branchId      String            @db.Uuid
+  ingredientId  String            @db.Uuid
+  createdById   String?           @db.Uuid
+  orderId       String?           @db.Uuid
+  type          StockMovementType
+  quantity      Int
+  balanceAfter  Int
+  unitCost      Int
+  totalCost     Int
+  note          String
+  externalRef   String?           @unique
+  createdAt     DateTime          @default(now())
+  branch        Branch            @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  ingredient    Ingredient        @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
+  createdBy     StaffUser?        @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  order         Order?            @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  @@unique([orderId, ingredientId])
+  @@index([branchId, createdAt])
+  @@index([ingredientId, createdAt])
 }

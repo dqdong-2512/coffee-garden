@@ -21,7 +21,7 @@ export function DashboardScreen({ today, month, userName }: { today: FinanceRepo
       <Card className="breakfast-card"><div className="flex items-center gap-3"><span className="breakfast-icon"><CircleDollarSign size={23} /></span><div><h2>Dòng tiền tháng này</h2><p className="muted mt-1 text-xs">Tổng hợp từ thanh toán và chi phí thực tế.</p></div></div>
         <div className="breakfast-grid">
           <div><p className="muted text-xs">Doanh thu</p><strong>{currency(month.revenue)}</strong></div><div><p className="muted text-xs">Chi phí</p><strong>{currency(month.expenses)}</strong></div>
-          <div><p className="muted text-xs"><WalletCards size={13} /> Tiền mặt</p><strong>{method("Tiền mặt").toFixed(1)}%</strong></div><div><p className="muted text-xs"><ReceiptText size={13} /> Còn lại ước tính</p><strong>{currency(month.estimatedProfit)}</strong></div>
+          <div><p className="muted text-xs"><WalletCards size={13} /> Tiền mặt</p><strong>{method("Tiền mặt").toFixed(1)}%</strong></div><div><p className="muted text-xs"><ReceiptText size={13} /> Dòng tiền còn lại</p><strong>{currency(month.cashFlow)}</strong></div>
         </div>
       </Card>
     </div>

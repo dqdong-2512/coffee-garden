@@ -9,6 +9,7 @@ import {
 import { paymentSchema } from "../src/features/payments/validation";
 import { createExpenseSchema } from "../src/features/finance/validation";
 import { financePeriod } from "../src/features/finance/period";
+import { stockMovementSchema } from "../src/features/inventory/validation";
 
 test("hashes staff passwords with a unique salt and verifies them", async () => {
   const first = await hashPassword("coffee-owner-local");
@@ -75,4 +76,10 @@ test("validates expense inputs and normalizes reversed report dates", () => {
     from: "2026-09-01", to: "2026-09-15", label: "01/09/2026 – 15/09/2026",
   });
   assert.equal(financePeriod("2026-02-31", "2026-09-15").from, "2026-09-01");
+});
+
+test("requires a positive unit cost for stock receipts", () => {
+  const ingredientId = "11111111-1111-4111-8111-111111111111";
+  assert.equal(stockMovementSchema.safeParse({ type: "STOCK_IN", ingredientId, quantity: 1000, unitCost: 180, note: "Nhập cà phê" }).success, true);
+  assert.equal(stockMovementSchema.safeParse({ type: "STOCK_IN", ingredientId, quantity: 1000, unitCost: 0, note: "Nhập cà phê" }).success, false);
 });

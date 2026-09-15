@@ -122,6 +122,59 @@ async function seed() {
   const owner = await prisma.staffUser.findUniqueOrThrow({
     where: { username: process.env.SEED_OWNER_USERNAME || "owner" },
   });
+  const ingredientSeeds = [
+    ["coffee-bean", "Cà phê hạt", "GRAM", 10_000, 2_000, 180],
+    ["condensed-milk", "Sữa đặc", "MILLILITER", 15_000, 3_000, 35],
+    ["beef", "Thịt bò", "GRAM", 30_000, 5_000, 220],
+    ["rice-noodle", "Bún tươi", "GRAM", 20_000, 4_000, 25],
+    ["bread", "Bánh mì", "PIECE", 100, 20, 5_000],
+    ["egg", "Trứng gà", "PIECE", 120, 24, 3_000],
+    ["orange", "Cam tươi", "GRAM", 20_000, 4_000, 80],
+    ["strawberry", "Dâu tây", "GRAM", 10_000, 2_000, 90],
+    ["avocado", "Bơ", "GRAM", 10_000, 2_000, 60],
+  ] as const;
+  const ingredientBySlug = new Map<string, { id: string }>();
+  for (const [slug, name, unit, currentQuantity, lowStockThreshold, costPerUnit] of ingredientSeeds) {
+    const ingredient = await prisma.ingredient.upsert({
+      where: { branchId_slug: { branchId: branch.id, slug } },
+      create: { branchId: branch.id, slug, name, unit, currentQuantity, lowStockThreshold, costPerUnit },
+      update: {},
+    });
+    ingredientBySlug.set(slug, ingredient);
+    await prisma.stockMovement.upsert({
+      where: { externalRef: `SEED-STOCK-${slug}` },
+      create: {
+        externalRef: `SEED-STOCK-${slug}`, branchId: branch.id, ingredientId: ingredient.id,
+        createdById: owner.id, type: "STOCK_IN", quantity: currentQuantity, balanceAfter: currentQuantity,
+        unitCost: costPerUnit, totalCost: currentQuantity * costPerUnit, note: "Tồn kho khởi tạo",
+      },
+      update: {},
+    });
+  }
+  const recipeSeeds: Record<string, Array<[string, number]>> = {
+    "bun-bo-hue": [["beef", 100], ["rice-noodle", 200]],
+    "bo-kho": [["beef", 120], ["bread", 1]],
+    "banh-mi-chao": [["bread", 1], ["egg", 1], ["beef", 50]],
+    "ca-phe-den-da": [["coffee-bean", 20]],
+    "ca-phe-den-nong": [["coffee-bean", 20]],
+    "ca-phe-sua": [["coffee-bean", 20], ["condensed-milk", 30]],
+    "bac-xiu": [["coffee-bean", 10], ["condensed-milk", 60]],
+    "nuoc-cam": [["orange", 250]],
+    "sinh-to-dau": [["strawberry", 180], ["condensed-milk", 40]],
+    "sinh-to-bo": [["avocado", 200], ["condensed-milk", 40]],
+  };
+  const seededProducts = await prisma.product.findMany({ where: { branchId: branch.id } });
+  for (const product of seededProducts) {
+    for (const [ingredientSlug, quantity] of recipeSeeds[product.slug] ?? []) {
+      const ingredient = ingredientBySlug.get(ingredientSlug);
+      if (!ingredient) continue;
+      await prisma.recipeItem.upsert({
+        where: { productId_ingredientId: { productId: product.id, ingredientId: ingredient.id } },
+        create: { productId: product.id, ingredientId: ingredient.id, quantity },
+        update: {},
+      });
+    }
+  }
   const sampleExpenses = [
     ["SEED-EX001", "2026-09-14", "INGREDIENT", 1_800_000, "Đà Lạt Coffee Co.", "Cà phê hạt · 10 kg", "BANK_TRANSFER"],
     ["SEED-EX002", "2026-09-14", "INGREDIENT", 950_000, "Chợ An Phú", "Rau và nguyên liệu đồ ăn sáng", "CASH"],
@@ -150,5 +203,5 @@ async function seed() {
 }
 
 seed()
-  .then(() => console.log("Seed hoàn tất: tài khoản, menu, bàn và 6 chi phí mẫu."))
+  .then(() => console.log("Seed hoàn tất: tài khoản, menu, bàn, chi phí, nguyên liệu và công thức mẫu."))
   .finally(() => prisma.$disconnect());

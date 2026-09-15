@@ -19,7 +19,7 @@ export function RevenueScreen({ report }: { report: FinanceReport }) {
       { label: "Doanh thu đã thu", value: currency(report.revenue), note: report.period.label, tone: "green" },
       { label: "Hóa đơn", value: report.paymentCount.toLocaleString("vi-VN"), note: "Đã thanh toán", tone: "brown" },
       { label: "Trung bình hóa đơn", value: currency(report.averageOrderValue), note: "Doanh thu ÷ hóa đơn", tone: "gold" },
-      { label: "Tiền còn lại ước tính", value: currency(report.estimatedProfit), note: "Doanh thu − chi phí đã ghi", tone: "green" },
+      { label: "Lợi nhuận ước tính", value: currency(report.estimatedProfit), note: "Sau giá vốn và chi vận hành", tone: "green" },
     ]} />
     <TrendChart title="Xu hướng doanh thu" data={report.revenueSeries} subtitle={`${report.period.label} · VND`} />
     <div className="mt-6"><RevenueProductTable products={report.products} subtitle={`${report.period.label} · theo hóa đơn đã thanh toán`} /></div>
