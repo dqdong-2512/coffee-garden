@@ -27,7 +27,7 @@ export async function updateOrderStatus(orderId: string, rawInput: unknown) {
 
   const current = await prisma.order.findUnique({
     where: { id: orderId },
-    select: { status: true },
+    select: { status: true, payment: { select: { status: true } } },
   });
   if (!current) {
     throw new OrderServiceError("ORDER_NOT_FOUND", 404, "Không tìm thấy order.");
@@ -37,6 +37,13 @@ export async function updateOrderStatus(orderId: string, rawInput: unknown) {
       "INVALID_STATUS_TRANSITION",
       409,
       "Order đã được cập nhật ở màn hình khác. Danh sách sẽ được tải lại.",
+    );
+  }
+  if (parsed.data.status === "CANCELLED" && current.payment?.status === "PAID") {
+    throw new OrderServiceError(
+      "PAID_ORDER_CANNOT_BE_CANCELLED",
+      409,
+      "Order đã thanh toán. Chủ quán cần hủy thanh toán trước.",
     );
   }
 

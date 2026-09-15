@@ -63,7 +63,7 @@ export function OrdersScreen({ orders }: { orders: Orders }) {
         </DataTable>
         <div className="table-footer"><span>{orders.length} orders</span><span>Recorded value <strong className="ml-3 text-stone-800">{formatVnd(total)}</strong></span></div>
       </Card>
-      <p className="mock-note">Database data · This development screen is not protected by authentication yet.</p>
+      <p className="mock-note">Authenticated database data · order values use the price snapshots stored at checkout.</p>
     </>
   );
 }

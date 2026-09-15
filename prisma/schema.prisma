@@ -24,6 +24,17 @@ enum OrderSource {
 enum StaffRole {
   OWNER
   KITCHEN
+  CASHIER
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+}
+
+enum PaymentStatus {
+  PAID
+  VOIDED
 }
 
 model StaffUser {
@@ -35,6 +46,7 @@ model StaffUser {
   isActive     Boolean   @default(true)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+  payments     Payment[]
 
   @@index([role, isActive])
 }
@@ -52,6 +64,7 @@ model Branch {
   diningTables  DiningTable[]
   orders        Order[]
   dailyCounters OrderDailyCounter[]
+  payments      Payment[]
 }
 
 model Category {
@@ -136,12 +149,37 @@ model Order {
   branch             Branch      @relation(fields: [branchId], references: [id], onDelete: Restrict)
   table              DiningTable @relation(fields: [tableId, branchId], references: [id, branchId], onDelete: Restrict)
   items              OrderItem[]
+  payment            Payment?
 
   @@unique([branchId, clientRequestId])
   @@unique([branchId, orderNo])
   @@index([branchId, createdAt])
   @@index([branchId, status])
   @@index([tableId, createdAt])
+}
+
+model Payment {
+  id          String        @id @default(uuid()) @db.Uuid
+  branchId    String        @db.Uuid
+  orderId     String        @unique @db.Uuid
+  createdById String        @db.Uuid
+  method      PaymentMethod
+  status      PaymentStatus @default(PAID)
+  amount      Int
+  reference   String?
+  note        String?
+  receivedAt  DateTime      @default(now())
+  voidedAt    DateTime?
+  voidReason  String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  branch      Branch        @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  order       Order         @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  createdBy   StaffUser     @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([branchId, receivedAt])
+  @@index([branchId, method, status])
+  @@index([createdById, receivedAt])
 }
 
 model OrderItem {

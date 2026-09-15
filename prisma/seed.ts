@@ -34,15 +34,17 @@ async function seed() {
   const local = isLocalDatabase(databaseUrl);
   const ownerPassword = process.env.SEED_OWNER_PASSWORD || (local ? "coffee-owner-local" : "");
   const kitchenPassword = process.env.SEED_KITCHEN_PASSWORD || (local ? "coffee-kitchen-local" : "");
-  if (!ownerPassword || !kitchenPassword) {
+  const cashierPassword = process.env.SEED_CASHIER_PASSWORD || (local ? "coffee-cashier-local" : "");
+  if (!ownerPassword || !kitchenPassword || !cashierPassword) {
     throw new Error(
-      "SEED_OWNER_PASSWORD and SEED_KITCHEN_PASSWORD are required for a non-local database.",
+      "Explicit Owner, Kitchen and Cashier seed passwords are required for a non-local database.",
     );
   }
 
-  const [ownerHash, kitchenHash] = await Promise.all([
+  const [ownerHash, kitchenHash, cashierHash] = await Promise.all([
     hashPassword(ownerPassword),
     hashPassword(kitchenPassword),
+    hashPassword(cashierPassword),
   ]);
   await prisma.staffUser.upsert({
     where: { username: process.env.SEED_OWNER_USERNAME || "owner" },
@@ -53,6 +55,16 @@ async function seed() {
       role: "OWNER",
     },
     update: { displayName: "Chủ quán", role: "OWNER", isActive: true },
+  });
+  await prisma.staffUser.upsert({
+    where: { username: process.env.SEED_CASHIER_USERNAME || "cashier" },
+    create: {
+      username: process.env.SEED_CASHIER_USERNAME || "cashier",
+      displayName: "Thu ngân",
+      passwordHash: cashierHash,
+      role: "CASHIER",
+    },
+    update: { displayName: "Thu ngân", role: "CASHIER", isActive: true },
   });
   await prisma.staffUser.upsert({
     where: { username: process.env.SEED_KITCHEN_USERNAME || "kitchen" },
@@ -109,5 +121,5 @@ async function seed() {
 }
 
 seed()
-  .then(() => console.log("Seed hoàn tất: 2 tài khoản, MAIN, 2 danh mục, 10 món và bàn T01–T12."))
+  .then(() => console.log("Seed hoàn tất: 3 tài khoản, MAIN, 2 danh mục, 10 món và bàn T01–T12."))
   .finally(() => prisma.$disconnect());

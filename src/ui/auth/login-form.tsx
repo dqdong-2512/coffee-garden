@@ -72,7 +72,7 @@ export function LoginForm({ nextPath }: { nextPath?: string }) {
             <LogIn size={17} />{busy ? "Đang đăng nhập…" : "Đăng nhập"}
           </button>
         </form>
-        <p className="login-help">Tài khoản nội bộ dành cho chủ quán và khu vực bếp.</p>
+        <p className="login-help">Tài khoản nội bộ dành cho chủ quán, thu ngân và khu vực bếp.</p>
       </section>
     </main>
   );

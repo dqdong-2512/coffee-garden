@@ -10,6 +10,12 @@ export type AuthenticatedUser = {
   role: StaffRole;
 };
 
+export function homeForRole(role: StaffRole) {
+  if (role === "OWNER") return "/owner/dashboard";
+  if (role === "KITCHEN") return "/kitchen";
+  return "/pos";
+}
+
 async function activeUser(session: { sub: string; role: StaffRole } | null) {
   if (!session) return null;
   const user = await prisma.staffUser.findUnique({
@@ -33,7 +39,7 @@ export async function requirePageUser(roles: StaffRole[], nextPath: string) {
   const user = await getPageUser();
   if (!user) redirect(`/login?next=${encodeURIComponent(nextPath)}`);
   if (!roles.includes(user.role)) {
-    redirect(user.role === "OWNER" ? "/owner/dashboard" : "/kitchen");
+    redirect(homeForRole(user.role));
   }
   return user;
 }

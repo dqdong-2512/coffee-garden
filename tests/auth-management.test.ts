@@ -6,6 +6,7 @@ import {
   createProductSchema,
   createTableSchema,
 } from "../src/features/management/validation";
+import { paymentSchema } from "../src/features/payments/validation";
 
 test("hashes staff passwords with a unique salt and verifies them", async () => {
   const first = await hashPassword("coffee-owner-local");
@@ -43,6 +44,20 @@ test("normalizes table codes and validates menu prices", () => {
       name: "Trà đào",
       price: 500,
     }).success,
+    false,
+  );
+});
+
+test("accepts supported payment methods and ignores a client amount", () => {
+  const payment = paymentSchema.parse({
+    orderId: "11111111-1111-4111-8111-111111111111",
+    method: "CASH",
+    amount: 1,
+  });
+  assert.equal(payment.method, "CASH");
+  assert.equal("amount" in payment, false);
+  assert.equal(
+    paymentSchema.safeParse({ orderId: payment.orderId, method: "CARD" }).success,
     false,
   );
 });

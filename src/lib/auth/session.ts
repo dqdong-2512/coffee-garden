@@ -49,7 +49,7 @@ export function verifySessionToken(token?: string | null): SessionPayload | null
     ) as Partial<SessionPayload>;
     if (
       typeof payload.sub !== "string" ||
-      (payload.role !== "OWNER" && payload.role !== "KITCHEN") ||
+      !["OWNER", "KITCHEN", "CASHIER"].includes(payload.role ?? "") ||
       typeof payload.exp !== "number" ||
       payload.exp <= Math.floor(Date.now() / 1000)
     ) {

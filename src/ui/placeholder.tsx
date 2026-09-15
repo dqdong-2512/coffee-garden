@@ -50,7 +50,7 @@ export function DevHome() {
     ["Revenue", "/owner/revenue", "Explore sales and payment trends."],
     ["Expenses", "/owner/expenses", "Keep business spending in view."],
     ["Profit", "/owner/profit", "Understand what your business keeps."],
-    ["POS", "/pos", "A future workspace for your team."],
+    ["POS", "/pos", "Create staff orders and collect payments."],
     ["Kitchen", "/kitchen", "Prepare and serve live orders."],
     [
       "Customer Order T12",
@@ -76,7 +76,7 @@ export function DevHome() {
             <h2>Open {title}</h2>
             <p className="muted text-sm">{description}</p>
             <span className="mt-5 block text-xs text-stone-500">
-              {i === 4 ? "Planned module" : "Live module"}
+              {i < 4 ? "UI preview" : "Live module"}
             </span>
           </Link>
         ))}

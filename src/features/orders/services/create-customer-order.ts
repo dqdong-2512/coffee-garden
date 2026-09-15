@@ -51,8 +51,9 @@ function vietnamBusinessDate(now = new Date()) {
   };
 }
 
-function requestHash(input: CustomerOrderInput) {
+function requestHash(input: CustomerOrderInput, source: "CUSTOMER_QR" | "POS") {
   const canonical = {
+    source,
     tableCode: input.tableCode,
     items: [...input.items]
       .map((item) => ({ ...item, itemNote: item.itemNote ?? "" }))
@@ -62,7 +63,11 @@ function requestHash(input: CustomerOrderInput) {
   return createHash("sha256").update(JSON.stringify(canonical)).digest("hex");
 }
 
-export async function createCustomerOrder(rawInput: unknown) {
+async function createOrder(
+  rawInput: unknown,
+  source: "CUSTOMER_QR" | "POS",
+  enforceTableRateLimit: boolean,
+) {
   const parsed = customerOrderSchema.safeParse(rawInput);
   if (!parsed.success) {
     throw new OrderServiceError(
@@ -73,7 +78,7 @@ export async function createCustomerOrder(rawInput: unknown) {
   }
 
   const input = parsed.data;
-  const hash = requestHash(input);
+  const hash = requestHash(input, source);
 
   return prisma.$transaction(async (transaction) => {
     await transaction.$queryRaw`
@@ -116,18 +121,20 @@ export async function createCustomerOrder(rawInput: unknown) {
       return { order: toReceipt(existing), replayed: true };
     }
 
-    const recentOrders = await transaction.order.count({
-      where: {
-        tableId: table.id,
-        createdAt: { gte: new Date(Date.now() - 60_000) },
-      },
-    });
-    if (recentOrders >= 8) {
-      throw new OrderServiceError(
-        "TOO_MANY_ORDERS",
-        429,
-        "Bàn vừa gửi nhiều order. Vui lòng chờ một phút hoặc gọi nhân viên.",
-      );
+    if (enforceTableRateLimit) {
+      const recentOrders = await transaction.order.count({
+        where: {
+          tableId: table.id,
+          createdAt: { gte: new Date(Date.now() - 60_000) },
+        },
+      });
+      if (recentOrders >= 8) {
+        throw new OrderServiceError(
+          "TOO_MANY_ORDERS",
+          429,
+          "Bàn vừa gửi nhiều order. Vui lòng chờ một phút hoặc gọi nhân viên.",
+        );
+      }
     }
 
     const products = await transaction.product.findMany({
@@ -189,7 +196,7 @@ export async function createCustomerOrder(rawInput: unknown) {
         clientRequestId: input.clientRequestId,
         requestHash: hash,
         orderNo,
-        source: "CUSTOMER_QR",
+        source,
         subtotal: totals.subtotal,
         totalAmount: totals.totalAmount,
         customerNote: input.customerNote || null,
@@ -209,4 +216,12 @@ export async function createCustomerOrder(rawInput: unknown) {
 
     return { order: toReceipt(order), replayed: false };
   });
+}
+
+export function createCustomerOrder(rawInput: unknown) {
+  return createOrder(rawInput, "CUSTOMER_QR", true);
+}
+
+export function createStaffOrder(rawInput: unknown) {
+  return createOrder(rawInput, "POS", false);
 }

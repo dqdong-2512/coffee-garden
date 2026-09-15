@@ -7,6 +7,7 @@ import {
   sessionCookieOptions,
 } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
+import { homeForRole } from "@/lib/auth/authorization";
 
 export const runtime = "nodejs";
 
@@ -37,7 +38,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const fallback = user.role === "OWNER" ? "/owner/dashboard" : "/kitchen";
+    const fallback = homeForRole(user.role);
     const response = NextResponse.json({ redirectTo: safeNextPath(input.data.next, fallback) });
     response.cookies.set(
       SESSION_COOKIE,

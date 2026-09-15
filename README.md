@@ -14,6 +14,8 @@ Coffee Garden is a Next.js 16 application for one café, with table ordering and
 - Real order list and expandable order details at `/owner/orders`.
 - Staff login with role checks for Owner and Kitchen, signed 12-hour `HttpOnly` sessions, and `scrypt` password hashes.
 - Owner management for products, categories, availability, prices, tables, and a downloadable QR for each table.
+- Staff POS at `/pos` for Owner/Cashier, using the live menu to create persisted orders that appear in Kitchen.
+- Manual cash and bank-transfer collection with server-derived amounts, staff attribution, idempotency, and Owner reconciliation.
 
 ## Local setup with Supabase and Docker
 
@@ -47,8 +49,9 @@ The local seed creates these review accounts:
 | --- | --- | --- |
 | Owner | `owner` | `coffee-owner-local` |
 | Kitchen | `kitchen` | `coffee-kitchen-local` |
+| Cashier | `cashier` | `coffee-cashier-local` |
 
-These credentials are for local review only. Change `AUTH_SESSION_SECRET`, `SEED_OWNER_PASSWORD`, and `SEED_KITCHEN_PASSWORD` before connecting a hosted database. Seed passwords create missing accounts and do not overwrite an existing account's password.
+These credentials are for local review only. Change `AUTH_SESSION_SECRET` and all three `SEED_*_PASSWORD` values before connecting a hosted database. Seed passwords create missing accounts and do not overwrite an existing account's password.
 
 The first `db:start` downloads the required Docker images and can take several minutes. Prisma is the only migration authority in this repository; Supabase's own migration and seed runners are disabled in `supabase/config.toml`.
 
@@ -62,6 +65,7 @@ Open these pages:
 
 - [Customer ordering at table T12](http://localhost:3000/order/T12)
 - [Staff login](http://localhost:3000/login)
+- [Staff POS](http://localhost:3000/pos)
 - [Kitchen workflow](http://localhost:3000/kitchen)
 - [Persisted orders for Owner](http://localhost:3000/owner/orders)
 - [Owner dashboard](http://localhost:3000/owner/dashboard)
@@ -81,11 +85,13 @@ Use this short acceptance flow:
 3. Change a product to **Tạm hết**, then open `/order/T12` in a private window and verify that the product is hidden. Turn it back on after review.
 4. Open Tables → **Xem QR** for T12. Download the SVG or open its menu link.
 5. Sign out, sign in as `kitchen`, and verify `/kitchen` opens while `/owner/dashboard` redirects back to Kitchen.
-6. Open `/order/T12` at a mobile viewport.
-7. Add 1 bún bò Huế and 2 cà phê sữa. The expected total is **115.000 ₫**.
-8. Submit the order, then move it in Kitchen through **Mới → Đang làm → Sẵn sàng → Đã phục vụ**.
-9. Verify the customer receipt updates after each change and the completed order appears in Owner → Orders.
-10. Create another order and cancel it in Kitchen; a reason is required and appears on the customer receipt.
+6. Sign in as `cashier`, open `/pos`, choose a table, add món and select **Tiền mặt** or **Chuyển khoản** before creating the order.
+7. Verify the POS order appears in Kitchen and in the Owner order list with source `POS`.
+8. Use **Chờ thanh toán** in POS to collect an unpaid QR order.
+9. Sign in as Owner and open `/owner/payments` to review payments or cancel a collection with a required reason.
+10. Open `/order/T12` at a mobile viewport, add 1 bún bò Huế and 2 cà phê sữa, and verify the expected total is **115.000 ₫**.
+11. Submit the order, then move it in Kitchen through **Mới → Đang làm → Sẵn sàng → Đã phục vụ**.
+12. Verify the customer receipt updates after each change and the completed order appears in Owner → Orders.
 
 The API ignores prices sent by a browser and resolves current prices from PostgreSQL. Re-sending the same `clientRequestId` returns the original order instead of creating a duplicate.
 
@@ -120,7 +126,7 @@ With local Supabase already started, migrated, and seeded:
 npm run test:db
 ```
 
-The test suite also verifies password hashing, signed-session tamper rejection, safe login redirects, and menu/table validation. The database test creates a real 115.000 ₫ order, verifies idempotent replay, stored line items, ordered status transitions, served timestamps, and cancellation reasons, then removes its test orders.
+The test suite also verifies password hashing, signed-session tamper rejection, safe login redirects, menu/table validation, and the payment trust boundary. Database tests cover QR and POS persistence, idempotent order creation, ordered kitchen transitions, payment amount derivation, payment reversal, and staff attribution, then remove their test records.
 
 ## Project structure
 
@@ -129,6 +135,8 @@ The test suite also verifies password hashing, signed-session tamper rejection, 
 - `src/features/orders`: validation, calculations, transaction service, and read queries.
 - `src/features/auth`: login validation; `src/lib/auth` contains password, session, and authorization code.
 - `src/features/management`: Owner menu/table queries, validation, and database services.
+- `src/features/pos`: POS catalog and payment-order views.
+- `src/features/payments`: payment validation and transactional collection/reversal services.
 - `src/ui/order`: mobile customer menu, cart, and receipt UI.
 - `src/ui/kitchen`: live operational board for preparing and serving orders.
 - `src/ui/owner`: responsive Owner workspace and persisted order table.
@@ -140,4 +148,4 @@ The test suite also verifies password hashing, signed-session tamper rejection, 
 
 Use Vercel preview deployments while testing and a managed Supabase PostgreSQL project in Southeast Asia (Singapore) to keep the database close to customers in Vietnam. Vercel Hobby is restricted to personal, non-commercial use, so move the live shop to Pro or another commercial host. See the official [Vercel plan guidance](https://vercel.com/docs/plans/hobby) and [Supabase region list](https://supabase.com/docs/guides/platform/regions).
 
-Set `DATABASE_URL` to the pooled runtime URL and `DIRECT_URL` to the direct database URL used by Prisma migrations, following [Prisma's connection guidance](https://www.prisma.io/docs/orm/prisma-client/setup-and-configuration/databases-connections). Set `PUBLIC_APP_URL` to the public HTTPS origin so downloaded table QR codes point to the production site. Use unique production staff passwords and a random `AUTH_SESSION_SECRET` of at least 32 characters, then run `npm run db:deploy` and `npm run db:seed` during the first release.
+Set `DATABASE_URL` to the pooled runtime URL and `DIRECT_URL` to the direct database URL used by Prisma migrations, following [Prisma's connection guidance](https://www.prisma.io/docs/orm/prisma-client/setup-and-configuration/databases-connections). Set `PUBLIC_APP_URL` to the public HTTPS origin so downloaded table QR codes point to the production site. Use unique production passwords for Owner, Kitchen and Cashier plus a random `AUTH_SESSION_SECRET` of at least 32 characters, then run `npm run db:deploy` and `npm run db:seed` during the first release. Bank transfers in Step 5 are confirmed manually by staff; no banking API or automatic VietQR reconciliation is enabled.

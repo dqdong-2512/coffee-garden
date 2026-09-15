@@ -103,7 +103,6 @@ export function KitchenBoard({
       body.orders.forEach((order) => seenIds.current.add(order.id));
       setOrders(body.orders);
       setConnected(true);
-      setError("");
       if (incoming.length && soundEnabled) beep();
     } catch {
       setConnected(false);
@@ -141,10 +140,10 @@ export function KitchenBoard({
       setCancelOrder(null);
       setCancelReason("");
     } catch (caught) {
-      setError(
-        caught instanceof Error ? caught.message : "Không thể cập nhật order.",
-      );
+      const message =
+        caught instanceof Error ? caught.message : "Không thể cập nhật order.";
       await refresh();
+      setError(message);
     } finally {
       setBusyId(null);
     }
