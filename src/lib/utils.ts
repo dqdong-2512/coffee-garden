@@ -6,6 +6,7 @@ export function cn(...values: ClassValue[]) {
 export function currency(value: number) {
   return new Intl.NumberFormat("vi-VN").format(value) + " ₫";
 }
+export const formatVnd = currency;
 export function compact(value: number) {
   return `${Number((value / 1000000).toFixed(1))}m`;
 }

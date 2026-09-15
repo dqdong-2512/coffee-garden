@@ -1,54 +1,118 @@
 # Coffee Garden
 
-Step 1: Owner UI foundation, built in the existing Next.js 16 / React / TypeScript App Router application with Tailwind CSS 4.
+Coffee Garden is a Next.js 16 application for table ordering and café operations. The current implementation includes the Owner dashboard foundation plus a real customer ordering flow backed by PostgreSQL.
 
-## Run locally
+## What works
 
-```sh
+- Customer menu at `/order/[tableCode]`, designed mobile-first for a QR code placed on each table.
+- Seed menu with 3 foods and 7 drinks: bún bò Huế, bò kho, bánh mì chảo, cà phê đen đá/nóng, cà phê sữa, bạc xỉu, nước cam, sinh tố dâu, and sinh tố bơ.
+- Cart quantities, per-item notes, a general note, server-side validation, and a success receipt.
+- Orders and item price/name snapshots persisted atomically in PostgreSQL.
+- Server-calculated totals, request idempotency, daily order numbers, availability checks, and a simple per-table rate limit.
+- Real order list at `/owner/orders` (authentication and status editing are planned for a later step).
+
+## Local setup with Supabase and Docker
+
+Install these prerequisites:
+
+- Node.js 22.12 or newer.
+- Docker Desktop with the Docker engine running.
+
+Supabase CLI is already a project dev dependency. You do not need to install PostgreSQL directly.
+
+From the project directory, install packages and create the local environment file:
+
+```powershell
 npm install
+Copy-Item .env.example .env
+```
+
+On macOS or Linux, use `cp .env.example .env` for the second command.
+
+Start the local Supabase stack, apply the checked-in Prisma migration, and insert the review data:
+
+```powershell
+npm run db:start
+npm run db:deploy
+npm run db:seed
+```
+
+The first `db:start` downloads the required Docker images and can take several minutes. Prisma is the only migration authority in this repository; Supabase's own migration and seed runners are disabled in `supabase/config.toml`.
+
+Start the web app:
+
+```powershell
 npm run dev
 ```
 
-Open http://localhost:3000 for development navigation.
+Open these pages:
 
-## Routes
+- [Customer ordering at table T12](http://localhost:3000/order/T12)
+- [Persisted orders for Owner](http://localhost:3000/owner/orders)
+- [Owner dashboard](http://localhost:3000/owner/dashboard)
+- [Local Supabase Studio](http://127.0.0.1:54323)
 
-- `/owner/dashboard`: daily KPIs, revenue overview, category mix, hourly revenue, breakfast performance, and top products.
-- `/owner/revenue`: preview filters, interval tabs, revenue metrics, product performance, category and payment breakdowns.
-- `/owner/expenses`: expense summaries, searchable/category-filtered table, validated temporary expense form.
-- `/owner/profit`: revenue/COGS/operating expense breakdown, margins, monthly trend, and category gross profit.
-- Owner placeholders: orders, payments, products, categories, inventory, stock, tables, staff, branches, sales-analytics, product-analytics, breakfast-analytics, reports, settings.
-- `/pos`, `/kitchen`, `/order/T12`: future-module placeholders. Customer routes accept a dynamic table code.
+Valid seeded table codes are `T01` through `T12`. The local PostgreSQL connection is `postgresql://postgres:postgres@127.0.0.1:54322/postgres` and is already present in `.env.example`.
 
-## Architecture
+## UI and persistence review
 
-- `src/app`: thin server route files, metadata, layout composition, and shared styling.
-- `src/ui/core`: buttons, cards, badges, page headers, metrics, tables, and accessible native dialog.
-- `src/ui/owner`: responsive shell/navigation, charts, reusable product table, and module screens.
-- `src/data`: centralized typed dashboard, revenue, product, expense, and profit fixtures.
-- `src/types`: shared view models.
-- `src/lib`: class composition and Vietnamese currency formatting.
-- `src/features`: reserved domain boundary documented for later work.
+Use this short acceptance flow:
 
-Interactive charts and forms use client components; route files remain server components. The native modal supplies modal focus containment and Escape behavior, restores focus on close, and locks background scrolling. Tables scroll within their cards. Mobile/tablet navigation uses a drawer; desktop has a persistent sidebar.
+1. Open `/order/T12` at a mobile viewport.
+2. Add 1 bún bò Huế and 2 cà phê sữa. The expected total is **115.000 ₫**.
+3. Open the cart, add optional notes, and submit the order.
+4. Verify the receipt displays an order number such as `CG-YYYYMMDD-0001`.
+5. Open `/owner/orders` and verify the same order, table, item count, status, and total appear after a refresh.
+6. Optionally inspect the `Order` and `OrderItem` rows in Supabase Studio.
 
-## Preview behavior
+The API ignores prices sent by a browser and resolves current prices from PostgreSQL. Re-sending the same `clientRequestId` returns the original order instead of creating a duplicate.
 
-All data is illustrative and anchored to 14 September 2026. Chart intervals switch between separate sample series; date/branch/comparison controls acknowledge the selected dates but do not filter live data. Expense entries update local component state and computed expense summaries; navigation or reload clears additions. No browser storage, API, auth, database, Supabase, or Prisma is configured.
+## Database commands
 
-Dashboard estimated profit is revenue minus today's recorded expenses. The Profit page separately illustrates accrual-style COGS and operating expenses. Sample datasets are independent; payment expense entries are not a ledger reconciled against category sales or profit reports. Reporting periods appear beside charts.
+```powershell
+npm run db:start      # start local Supabase containers
+npm run db:stop       # stop them without deleting data
+npm run db:deploy     # apply checked-in migrations
+npm run db:migrate    # create a new migration during development
+npm run db:seed       # insert missing sample catalog/table data
+npm run db:reset      # rebuild the Prisma schema and seed data (destructive locally)
+npm run db:studio     # open Prisma Studio
+npm run db:validate   # validate the Prisma schema
+```
 
-## Design reference
-
-Inspected `references/tailwindadmin/tailwindadmin-react-1.0.0`, including its sidebar, FullLayout, Modern dashboard, RevenueUpdate, and ProductPerformance components. Adapted grouped icon navigation, active-route treatment, responsive asymmetric chart grids, compact headers, softly bordered rounded cards, muted table headers, and badges. Implementations are local Coffee Garden components, with no reference runtime imports or template assets. The reference remains unmodified and is excluded from TypeScript, ESLint, and Tailwind scanning. Its original MIT license remains in the reference directory.
-
-Added runtime dependencies: `lucide-react`, `recharts`, `clsx`, `tailwind-merge`. System fonts keep builds independent of remote font downloads.
+The seed is explicit and idempotent: it creates missing rows but does not overwrite later menu edits.
 
 ## Validation
 
-```sh
+With no database required:
+
+```powershell
+npm test
 npm run lint
 npm run build
 ```
 
-Both pass. Browser checks cover the requested 375, 768, 1024, and 1440 widths, navigation drawer, chart tabs, mock filter feedback, expense creation and summary updates, and table filtering. No automated test dependency was added.
+With local Supabase already started, migrated, and seeded:
+
+```powershell
+npm run test:db
+```
+
+The database test creates a real 115.000 ₫ order, verifies idempotent replay and stored line items, then removes that test order.
+
+## Project structure
+
+- `src/app`: App Router pages and the `POST /api/orders` route handler.
+- `src/features/catalog`: customer catalog query and view types.
+- `src/features/orders`: validation, calculations, transaction service, and read queries.
+- `src/ui/order`: mobile customer menu, cart, and receipt UI.
+- `src/ui/owner`: responsive Owner workspace and persisted order table.
+- `src/lib/db`: shared Prisma client using the PostgreSQL driver adapter.
+- `prisma`: schema, migration, and explicit seed.
+- `supabase`: local Docker stack configuration.
+
+## Deployment direction
+
+Use Vercel preview deployments while testing and a managed Supabase PostgreSQL project in Southeast Asia (Singapore) to keep the database close to customers in Vietnam. Vercel Hobby is restricted to personal, non-commercial use, so move the live shop to Pro or another commercial host. See the official [Vercel plan guidance](https://vercel.com/docs/plans/hobby) and [Supabase region list](https://supabase.com/docs/guides/platform/regions).
+
+Set `DATABASE_URL` to the pooled runtime URL and `DIRECT_URL` to the direct database URL used by Prisma migrations, following [Prisma's connection guidance](https://www.prisma.io/docs/orm/prisma-client/setup-and-configuration/databases-connections). Run `npm run db:deploy` during the release process. Before using the Owner area in a real shop, add authentication and role checks; `/owner/orders` is intentionally unprotected in this local review step.

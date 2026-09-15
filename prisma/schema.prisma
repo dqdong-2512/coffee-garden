@@ -1,0 +1,140 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY
+  SERVED
+  CANCELLED
+}
+
+enum OrderSource {
+  CUSTOMER_QR
+  POS
+}
+
+model Branch {
+  id        String   @id @default(uuid()) @db.Uuid
+  code      String   @unique
+  name      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  categories    Category[]
+  products      Product[]
+  diningTables  DiningTable[]
+  orders        Order[]
+  dailyCounters OrderDailyCounter[]
+}
+
+model Category {
+  id           String    @id @default(uuid()) @db.Uuid
+  branchId     String    @db.Uuid
+  branch       Branch    @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  name         String
+  slug         String
+  displayOrder Int       @default(0)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  products     Product[]
+
+  @@unique([branchId, slug])
+  @@unique([id, branchId])
+}
+
+model Product {
+  id           String      @id @default(uuid()) @db.Uuid
+  branchId     String      @db.Uuid
+  categoryId   String      @db.Uuid
+  branch       Branch      @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  category     Category    @relation(fields: [categoryId, branchId], references: [id, branchId], onDelete: Restrict)
+  name         String
+  slug         String
+  description  String
+  price        Int
+  imageUrl     String?
+  isAvailable  Boolean     @default(true)
+  displayOrder Int         @default(0)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  orderItems   OrderItem[]
+
+  @@unique([branchId, slug])
+  @@index([branchId, categoryId, isAvailable])
+}
+
+model DiningTable {
+  id        String   @id @default(uuid()) @db.Uuid
+  branchId  String   @db.Uuid
+  branch    Branch   @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  code      String
+  name      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orders    Order[]
+
+  @@unique([branchId, code])
+  @@unique([id, branchId])
+}
+
+model OrderDailyCounter {
+  branchId     String   @db.Uuid
+  businessDate DateTime @db.Date
+  lastValue    Int      @default(0)
+  branch       Branch   @relation(fields: [branchId], references: [id], onDelete: Restrict)
+
+  @@id([branchId, businessDate])
+}
+
+model Order {
+  id              String      @id @default(uuid()) @db.Uuid
+  branchId        String      @db.Uuid
+  tableId         String      @db.Uuid
+  clientRequestId String      @db.Uuid
+  requestHash     String
+  orderNo         String
+  status          OrderStatus @default(PENDING)
+  source          OrderSource @default(CUSTOMER_QR)
+  subtotal        Int
+  totalAmount     Int
+  customerNote    String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  branch          Branch      @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  table           DiningTable @relation(fields: [tableId, branchId], references: [id, branchId], onDelete: Restrict)
+  items           OrderItem[]
+
+  @@unique([branchId, clientRequestId])
+  @@unique([branchId, orderNo])
+  @@index([branchId, createdAt])
+  @@index([branchId, status])
+  @@index([tableId, createdAt])
+}
+
+model OrderItem {
+  id          String   @id @default(uuid()) @db.Uuid
+  orderId     String   @db.Uuid
+  productId   String   @db.Uuid
+  productName String
+  unitPrice   Int
+  quantity    Int
+  lineTotal   Int
+  itemNote    String?
+  createdAt   DateTime @default(now())
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@index([productId])
+}
