@@ -9,7 +9,9 @@ Coffee Garden is a Next.js 16 application for table ordering and café operation
 - Cart quantities, per-item notes, a general note, server-side validation, and a success receipt.
 - Orders and item price/name snapshots persisted atomically in PostgreSQL.
 - Server-calculated totals, request idempotency, daily order numbers, availability checks, and a simple per-table rate limit.
-- Real order list at `/owner/orders` (authentication and status editing are planned for a later step).
+- Kitchen board at `/kitchen` with four-second refresh, optional new-order sound, persisted status transitions, and cancellation reasons.
+- Customer receipts automatically track kitchen progress through served or cancelled.
+- Real order list and expandable order details at `/owner/orders`.
 
 ## Local setup with Supabase and Docker
 
@@ -48,6 +50,7 @@ npm run dev
 Open these pages:
 
 - [Customer ordering at table T12](http://localhost:3000/order/T12)
+- [Kitchen workflow](http://localhost:3000/kitchen)
 - [Persisted orders for Owner](http://localhost:3000/owner/orders)
 - [Owner dashboard](http://localhost:3000/owner/dashboard)
 - [Local Supabase Studio](http://127.0.0.1:54323)
@@ -62,8 +65,11 @@ Use this short acceptance flow:
 2. Add 1 bún bò Huế and 2 cà phê sữa. The expected total is **115.000 ₫**.
 3. Open the cart, add optional notes, and submit the order.
 4. Verify the receipt displays an order number such as `CG-YYYYMMDD-0001`.
-5. Open `/owner/orders` and verify the same order, table, item count, status, and total appear after a refresh.
-6. Optionally inspect the `Order` and `OrderItem` rows in Supabase Studio.
+5. Keep the receipt open and open `/kitchen` in another tab. Move the order through **Mới → Đang làm → Sẵn sàng → Đã phục vụ**.
+6. Verify the customer receipt updates automatically after each kitchen change.
+7. Open `/owner/orders` and verify the same order, item details, status, and total appear after a refresh.
+8. Create another order and cancel it in Kitchen; a reason is required and appears on the customer receipt.
+9. Optionally inspect the `Order` and `OrderItem` rows in Supabase Studio.
 
 The API ignores prices sent by a browser and resolves current prices from PostgreSQL. Re-sending the same `clientRequestId` returns the original order instead of creating a duplicate.
 
@@ -98,7 +104,7 @@ With local Supabase already started, migrated, and seeded:
 npm run test:db
 ```
 
-The database test creates a real 115.000 ₫ order, verifies idempotent replay and stored line items, then removes that test order.
+The database test creates a real 115.000 ₫ order, verifies idempotent replay, stored line items, ordered status transitions, served timestamps, and cancellation reasons, then removes its test orders.
 
 ## Project structure
 
@@ -106,6 +112,7 @@ The database test creates a real 115.000 ₫ order, verifies idempotent replay a
 - `src/features/catalog`: customer catalog query and view types.
 - `src/features/orders`: validation, calculations, transaction service, and read queries.
 - `src/ui/order`: mobile customer menu, cart, and receipt UI.
+- `src/ui/kitchen`: live operational board for preparing and serving orders.
 - `src/ui/owner`: responsive Owner workspace and persisted order table.
 - `src/lib/db`: shared Prisma client using the PostgreSQL driver adapter.
 - `prisma`: schema, migration, and explicit seed.
@@ -115,4 +122,4 @@ The database test creates a real 115.000 ₫ order, verifies idempotent replay a
 
 Use Vercel preview deployments while testing and a managed Supabase PostgreSQL project in Southeast Asia (Singapore) to keep the database close to customers in Vietnam. Vercel Hobby is restricted to personal, non-commercial use, so move the live shop to Pro or another commercial host. See the official [Vercel plan guidance](https://vercel.com/docs/plans/hobby) and [Supabase region list](https://supabase.com/docs/guides/platform/regions).
 
-Set `DATABASE_URL` to the pooled runtime URL and `DIRECT_URL` to the direct database URL used by Prisma migrations, following [Prisma's connection guidance](https://www.prisma.io/docs/orm/prisma-client/setup-and-configuration/databases-connections). Run `npm run db:deploy` during the release process. Before using the Owner area in a real shop, add authentication and role checks; `/owner/orders` is intentionally unprotected in this local review step.
+Set `DATABASE_URL` to the pooled runtime URL and `DIRECT_URL` to the direct database URL used by Prisma migrations, following [Prisma's connection guidance](https://www.prisma.io/docs/orm/prisma-client/setup-and-configuration/databases-connections). Run `npm run db:deploy` during the release process. Before using the app in a real shop, add authentication and role checks; `/owner` and `/kitchen` are intentionally unprotected during local review.

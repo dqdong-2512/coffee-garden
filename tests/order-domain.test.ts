@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { calculateOrderTotals } from "../src/features/orders/services/order-calculations";
 import { customerOrderSchema } from "../src/features/orders/validation/customer-order";
+import { kitchenStatusSchema } from "../src/features/orders/validation/kitchen-status";
 
 const firstProduct = "11111111-1111-4111-8111-111111111111";
 const secondProduct = "22222222-2222-4222-8222-222222222222";
@@ -45,4 +46,13 @@ test("calculates line totals and order total using integer VND", () => {
   assert.equal(result.lines[0]?.lineTotal, 55_000);
   assert.equal(result.lines[1]?.lineTotal, 60_000);
   assert.equal(result.totalAmount, 115_000);
+});
+
+test("requires a reason when the kitchen cancels an order", () => {
+  assert.equal(kitchenStatusSchema.safeParse({ status: "PREPARING" }).success, true);
+  const cancelled = kitchenStatusSchema.safeParse({ status: "CANCELLED" });
+  assert.equal(cancelled.success, false);
+  if (!cancelled.success) {
+    assert.equal(cancelled.error.issues[0]?.message, "Vui lòng nhập lý do hủy order.");
+  }
 });

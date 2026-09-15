@@ -11,9 +11,18 @@ export async function listOwnerOrders() {
       totalAmount: true,
       source: true,
       status: true,
+      customerNote: true,
+      cancellationReason: true,
       table: { select: { code: true } },
       _count: { select: { items: true } },
-      items: { select: { quantity: true } },
+      items: {
+        select: {
+          productName: true,
+          quantity: true,
+          itemNote: true,
+          lineTotal: true,
+        },
+      },
     },
   });
 }

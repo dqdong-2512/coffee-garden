@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { prisma } from "../../src/lib/db/prisma";
 import { createCustomerOrder } from "../../src/features/orders/services/create-customer-order";
+import { updateOrderStatus } from "../../src/features/orders/services/update-order-status";
+import { OrderServiceError } from "../../src/features/orders/services/order-errors";
 
 test("persists an order atomically and replays the same request", async (context) => {
   const table = await prisma.diningTable.findFirstOrThrow({
@@ -25,8 +27,9 @@ test("persists an order atomically and replays the same request", async (context
     ],
   };
   const first = await createCustomerOrder(input);
+  const createdIds = [first.order.id];
   context.after(async () => {
-    await prisma.order.delete({ where: { id: first.order.id } });
+    await prisma.order.deleteMany({ where: { id: { in: createdIds } } });
     await prisma.$disconnect();
   });
 
@@ -42,4 +45,43 @@ test("persists an order atomically and replays the same request", async (context
   });
   assert.equal(stored.totalAmount, 115_000);
   assert.equal(stored.items.length, 2);
+
+  await assert.rejects(
+    () => updateOrderStatus(first.order.id, { status: "READY" }),
+    (error) =>
+      error instanceof OrderServiceError &&
+      error.code === "INVALID_STATUS_TRANSITION",
+  );
+  assert.equal(
+    (await updateOrderStatus(first.order.id, { status: "PREPARING" })).status,
+    "PREPARING",
+  );
+  assert.equal(
+    (await updateOrderStatus(first.order.id, { status: "READY" })).status,
+    "READY",
+  );
+  assert.equal(
+    (await updateOrderStatus(first.order.id, { status: "SERVED" })).status,
+    "SERVED",
+  );
+  const served = await prisma.order.findUniqueOrThrow({
+    where: { id: first.order.id },
+  });
+  assert.ok(served.servedAt);
+
+  const cancellation = await createCustomerOrder({
+    ...input,
+    clientRequestId: crypto.randomUUID(),
+  });
+  createdIds.push(cancellation.order.id);
+  await updateOrderStatus(cancellation.order.id, {
+    status: "CANCELLED",
+    cancellationReason: "Khách yêu cầu hủy",
+  });
+  const cancelled = await prisma.order.findUniqueOrThrow({
+    where: { id: cancellation.order.id },
+  });
+  assert.equal(cancelled.status, "CANCELLED");
+  assert.equal(cancelled.cancellationReason, "Khách yêu cầu hủy");
+  assert.ok(cancelled.cancelledAt);
 });

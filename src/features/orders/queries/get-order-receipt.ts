@@ -28,6 +28,8 @@ export async function getOrderReceipt(
     tableCode: order.table.code,
     tableName: order.table.name,
     status: order.status,
+    statusUpdatedAt: order.statusUpdatedAt.toISOString(),
+    cancellationReason: order.cancellationReason,
     totalAmount: order.totalAmount,
     customerNote: order.customerNote,
     createdAt: order.createdAt.toISOString(),

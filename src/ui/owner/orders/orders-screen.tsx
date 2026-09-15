@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { Clock3, RefreshCw } from "lucide-react";
 import { listOwnerOrders } from "@/features/orders/queries/list-owner-orders";
 import { formatVnd } from "@/lib/utils";
@@ -26,7 +27,8 @@ export function OrdersScreen({ orders }: { orders: Orders }) {
           {orders.map((order) => {
             const quantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
             return (
-              <tr key={order.id}>
+              <Fragment key={order.id}>
+              <tr>
                 <td className="font-semibold">{order.orderNo}</td>
                 <td><span className="owner-order-time"><Clock3 size={13} />{new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Ho_Chi_Minh" }).format(order.createdAt)}</span></td>
                 <td>{order.table.code}</td>
@@ -35,6 +37,26 @@ export function OrdersScreen({ orders }: { orders: Orders }) {
                 <td><Badge>{statusLabel[order.status]}</Badge></td>
                 <td className="font-semibold">{formatVnd(order.totalAmount)}</td>
               </tr>
+              <tr className="owner-order-detail-row">
+                <td colSpan={7}>
+                  <details className="owner-order-details">
+                    <summary>View order details</summary>
+                    <div>
+                      <ul>
+                        {order.items.map((item, index) => (
+                          <li key={`${item.productName}-${index}`}>
+                            <span><b>{item.quantity}×</b> {item.productName}{item.itemNote && <small>{item.itemNote}</small>}</span>
+                            <strong>{formatVnd(item.lineTotal)}</strong>
+                          </li>
+                        ))}
+                      </ul>
+                      {order.customerNote && <p><b>Customer note:</b> {order.customerNote}</p>}
+                      {order.cancellationReason && <p><b>Cancellation:</b> {order.cancellationReason}</p>}
+                    </div>
+                  </details>
+                </td>
+              </tr>
+              </Fragment>
             );
           })}
           {!orders.length && <tr><td colSpan={7} className="empty-table">No orders yet. Submit one from /order/T12.</td></tr>}
