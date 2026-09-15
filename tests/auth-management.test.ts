@@ -7,6 +7,8 @@ import {
   createTableSchema,
 } from "../src/features/management/validation";
 import { paymentSchema } from "../src/features/payments/validation";
+import { createExpenseSchema } from "../src/features/finance/validation";
+import { financePeriod } from "../src/features/finance/period";
 
 test("hashes staff passwords with a unique salt and verifies them", async () => {
   const first = await hashPassword("coffee-owner-local");
@@ -60,4 +62,17 @@ test("accepts supported payment methods and ignores a client amount", () => {
     paymentSchema.safeParse({ orderId: payment.orderId, method: "CARD" }).success,
     false,
   );
+});
+
+test("validates expense inputs and normalizes reversed report dates", () => {
+  const expense = createExpenseSchema.parse({
+    category: "INGREDIENT", amount: "125000", incurredAt: "2026-09-15",
+    supplier: "Chợ địa phương", description: "Rau và gia vị", paymentMethod: "CASH",
+  });
+  assert.equal(expense.amount, 125000);
+  assert.equal(createExpenseSchema.safeParse({ ...expense, incurredAt: "2026-02-31" }).success, false);
+  assert.deepEqual(financePeriod("2026-09-15", "2026-09-01"), {
+    from: "2026-09-01", to: "2026-09-15", label: "01/09/2026 – 15/09/2026",
+  });
+  assert.equal(financePeriod("2026-02-31", "2026-09-15").from, "2026-09-01");
 });

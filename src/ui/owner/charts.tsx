@@ -21,20 +21,22 @@ import { compact, currency } from "@/lib/utils";
 import { revenueSeries } from "@/data/revenue";
 import type { RevenuePoint, SalesCategory } from "@/types";
 const axis = { fontSize: 11, fill: "#8a8c8a" };
-export function TrendChart({ title = "Revenue Overview" }: { title?: string }) {
+export function TrendChart({ title = "Revenue Overview", data, subtitle }: { title?: string; data?: RevenuePoint[]; subtitle?: string }) {
   const [period, setPeriod] = useState<"Day" | "Week" | "Month">("Day");
+  const chartData = data ?? revenueSeries[period];
   return (
     <Card>
       <CardHeader
         title={title}
-        subtitle={
+        subtitle={subtitle ?? (
           period === "Day"
             ? "1–14 September 2026 · VND"
             : period === "Week"
               ? "September 2026 · weekly sample"
               : "April–September 2026 · monthly sample"
-        }
+        )}
         action={
+          data ? <span className="text-xs text-stone-500">Dữ liệu đã thu</span> :
           <div className="segments" aria-label="Chart interval">
             {(["Day", "Week", "Month"] as const).map((p) => (
               <button
@@ -51,17 +53,17 @@ export function TrendChart({ title = "Revenue Overview" }: { title?: string }) {
       <div className="chart-legend">
         <span>
           <i style={{ background: "#708C5A" }} />
-          Revenue
+          Doanh thu
         </span>
-        <span>
+        {!data && <span>
           <i style={{ background: "#cdc6bb" }} />
           Previous period
-        </span>
+        </span>}
       </div>
       <div
         className="chart"
         role="img"
-        aria-label={`Revenue in VND by ${period.toLowerCase()}. Current and previous period.`}
+        aria-label={`Doanh thu VND theo ${data ? "ngày" : period.toLowerCase()}.`}
       >
         <ResponsiveContainer
           width="100%"
@@ -70,7 +72,7 @@ export function TrendChart({ title = "Revenue Overview" }: { title?: string }) {
           initialDimension={{ width: 600, height: 240 }}
         >
           <AreaChart
-            data={revenueSeries[period]}
+          data={chartData}
             margin={{ top: 10, right: 12, left: -15, bottom: 0 }}
           >
             <defs>
@@ -108,16 +110,7 @@ export function TrendChart({ title = "Revenue Overview" }: { title?: string }) {
               formatter={(v) => currency(Number(v))}
               contentStyle={{ borderRadius: 12, borderColor: "#E7E5E4" }}
             />
-            <Area
-              type="monotone"
-              dataKey="previous"
-              name="Previous period"
-              stroke="#c9c1b5"
-              strokeDasharray="5 5"
-              fill="transparent"
-              strokeWidth={2}
-              isAnimationActive={false}
-            />
+            {!data && <Area type="monotone" dataKey="previous" name="Previous period" stroke="#c9c1b5" strokeDasharray="5 5" fill="transparent" strokeWidth={2} isAnimationActive={false} />}
             <Area
               type="monotone"
               dataKey="revenue"
@@ -142,6 +135,7 @@ export function CategoryChart({
   data: SalesCategory[];
   subtitle?: string;
 }) {
+  const total = data.reduce((sum, item) => sum + item.value, 0);
   return (
     <Card>
       <CardHeader title={title} subtitle={subtitle} />
@@ -176,7 +170,7 @@ export function CategoryChart({
         </ResponsiveContainer>
         <div className="donut-center">
           <strong>
-            100<span>%</span>
+            {total ? 100 : 0}<span>%</span>
           </strong>
           <small>Total sales</small>
         </div>
@@ -195,13 +189,13 @@ export function CategoryChart({
     </Card>
   );
 }
-export function HourChart({ data }: { data: RevenuePoint[] }) {
+export function HourChart({ data, subtitle = "Doanh thu đã thu theo giờ", action = "05:00 – 22:00" }: { data: RevenuePoint[]; subtitle?: string; action?: string }) {
   return (
     <Card>
       <CardHeader
         title="Revenue by Hour"
-        subtitle="Breakfast service · 1–14 September 2026"
-        action={<span className="text-xs text-stone-500">05:00 – 11:00</span>}
+        subtitle={subtitle}
+        action={<span className="text-xs text-stone-500">{action}</span>}
       />
       <div
         className="chart"
@@ -255,28 +249,25 @@ export function HourChart({ data }: { data: RevenuePoint[] }) {
           </BarChart>
         </ResponsiveContainer>
       </div>
-      <p className="chart-foot">
-        <span className="status-dot" /> 08:00 brings in the highest breakfast
-        revenue.
-      </p>
+      <p className="chart-foot"><span className="status-dot" /> Chỉ tính các thanh toán đã hoàn tất.</p>
     </Card>
   );
 }
-export function ProfitTrendChart({ data }: { data: RevenuePoint[] }) {
+export function ProfitTrendChart({ data, subtitle }: { data: RevenuePoint[]; subtitle?: string }) {
   return (
     <Card>
       <CardHeader
-        title="Monthly Profit Trend"
-        subtitle="April–September 2026 · September month to date"
+        title="Dòng tiền theo ngày"
+        subtitle={subtitle}
       />
       <div className="chart-legend">
         <span>
           <i style={{ background: "#c2b09d" }} />
-          Net revenue
+          Doanh thu đã thu
         </span>
         <span>
           <i style={{ background: "#708C5A" }} />
-          Net profit
+          Dòng tiền ước tính
         </span>
       </div>
       <div
@@ -311,7 +302,7 @@ export function ProfitTrendChart({ data }: { data: RevenuePoint[] }) {
             <Tooltip formatter={(v) => currency(Number(v))} />
             <Line
               dataKey="revenue"
-              name="Net revenue"
+              name="Doanh thu đã thu"
               stroke="#c2b09d"
               strokeWidth={2}
               dot={false}
@@ -319,7 +310,7 @@ export function ProfitTrendChart({ data }: { data: RevenuePoint[] }) {
             />
             <Line
               dataKey="profit"
-              name="Net profit"
+              name="Dòng tiền ước tính"
               stroke="#708C5A"
               strokeWidth={3}
               dot={{ r: 4 }}
@@ -331,13 +322,13 @@ export function ProfitTrendChart({ data }: { data: RevenuePoint[] }) {
     </Card>
   );
 }
-export function ProfitCategoryChart({ data }: { data: SalesCategory[] }) {
-  const max = Math.max(...data.map((d) => d.value));
+export function ProfitCategoryChart({ data, title = "Chi phí theo nhóm", subtitle = "Theo ngày ghi nhận khoản chi" }: { data: SalesCategory[]; title?: string; subtitle?: string }) {
+  const max = Math.max(1, ...data.map((d) => d.value));
   return (
     <Card>
       <CardHeader
-        title="Profit by Category"
-        subtitle="Gross profit before shared operating expenses"
+        title={title}
+        subtitle={subtitle}
       />
       <div className="space-y-6 py-3">
         {data.map((d) => (
@@ -357,6 +348,7 @@ export function ProfitCategoryChart({ data }: { data: SalesCategory[] }) {
             </div>
           </div>
         ))}
+        {!data.length && <p className="muted text-sm">Chưa có chi phí trong kỳ này.</p>}
       </div>
     </Card>
   );

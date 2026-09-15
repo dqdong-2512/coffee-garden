@@ -16,6 +16,8 @@ Coffee Garden is a Next.js 16 application for one café, with table ordering and
 - Owner management for products, categories, availability, prices, tables, and a downloadable QR for each table.
 - Staff POS at `/pos` for Owner/Cashier, using the live menu to create persisted orders that appear in Kitchen.
 - Manual cash and bank-transfer collection with server-derived amounts, staff attribution, idempotency, and Owner reconciliation.
+- Persisted expense entry with category, supplier, payment method, date, and Owner attribution.
+- Live Owner dashboard, revenue, expense, and estimated profit reports calculated from paid invoices and recorded expenses.
 
 ## Local setup with Supabase and Docker
 
@@ -69,6 +71,9 @@ Open these pages:
 - [Kitchen workflow](http://localhost:3000/kitchen)
 - [Persisted orders for Owner](http://localhost:3000/owner/orders)
 - [Owner dashboard](http://localhost:3000/owner/dashboard)
+- [Revenue report](http://localhost:3000/owner/revenue)
+- [Expense management](http://localhost:3000/owner/expenses)
+- [Estimated profit](http://localhost:3000/owner/profit)
 - [Product management](http://localhost:3000/owner/products)
 - [Category management](http://localhost:3000/owner/categories)
 - [Table and QR management](http://localhost:3000/owner/tables)
@@ -92,8 +97,10 @@ Use this short acceptance flow:
 10. Open `/order/T12` at a mobile viewport, add 1 bún bò Huế and 2 cà phê sữa, and verify the expected total is **115.000 ₫**.
 11. Submit the order, then move it in Kitchen through **Mới → Đang làm → Sẵn sàng → Đã phục vụ**.
 12. Verify the customer receipt updates after each change and the completed order appears in Owner → Orders.
+13. In Owner → Expenses, add a small test expense and reload the page to verify that it persists.
+14. Open Dashboard, Revenue, and Profit. Verify that PAID collections and the new expense appear in the selected period.
 
-The API ignores prices sent by a browser and resolves current prices from PostgreSQL. Re-sending the same `clientRequestId` returns the original order instead of creating a duplicate.
+The API ignores prices sent by a browser and resolves current prices from PostgreSQL. Re-sending the same `clientRequestId` returns the original order instead of creating a duplicate. Step 6 profit is a cash-flow estimate: paid revenue minus expenses recorded in the same period. Ingredient purchases are not yet inventory consumption or accounting COGS.
 
 ## Database commands
 
@@ -126,7 +133,7 @@ With local Supabase already started, migrated, and seeded:
 npm run test:db
 ```
 
-The test suite also verifies password hashing, signed-session tamper rejection, safe login redirects, menu/table validation, and the payment trust boundary. Database tests cover QR and POS persistence, idempotent order creation, ordered kitchen transitions, payment amount derivation, payment reversal, and staff attribution, then remove their test records.
+The test suite also verifies password hashing, signed-session tamper rejection, safe login redirects, menu/table/expense validation, period normalization, and the payment trust boundary. Database tests cover QR and POS persistence, idempotent order creation, ordered kitchen transitions, payment amount derivation, payment reversal, staff attribution, expense persistence, and cash-flow aggregation, then remove their test records.
 
 ## Project structure
 
@@ -137,6 +144,7 @@ The test suite also verifies password hashing, signed-session tamper rejection, 
 - `src/features/management`: Owner menu/table queries, validation, and database services.
 - `src/features/pos`: POS catalog and payment-order views.
 - `src/features/payments`: payment validation and transactional collection/reversal services.
+- `src/features/finance`: expense validation/persistence, reporting periods, and live financial aggregation.
 - `src/ui/order`: mobile customer menu, cart, and receipt UI.
 - `src/ui/kitchen`: live operational board for preparing and serving orders.
 - `src/ui/owner`: responsive Owner workspace and persisted order table.

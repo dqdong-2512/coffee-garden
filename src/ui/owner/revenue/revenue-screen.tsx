@@ -1,74 +1,31 @@
-"use client";
-import { useState, type FormEvent } from "react";
 import { SlidersHorizontal } from "lucide-react";
-import { revenueMetrics, paymentMethods } from "@/data/revenue";
-import { salesCategories } from "@/data/dashboard";
+import type { FinanceReport } from "@/features/finance/types";
+import { currency } from "@/lib/utils";
 import { PageHeader, StatCards, Button } from "@/ui/core/primitives";
 import { TrendChart, CategoryChart } from "@/ui/owner/charts";
-import { ProductTable } from "@/ui/owner/product-table";
-export function RevenueScreen() {
-  const [notice, setNotice] = useState("");
-  function apply(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const data = new FormData(e.currentTarget);
-    const from = String(data.get("from"));
-    const to = String(data.get("to"));
-    setNotice(
-      from > to
-        ? "Date From must be before Date To."
-        : `Preview filters applied: ${from} to ${to}. Charts retain the labeled sample periods; live filtering is coming in a future step.`,
-    );
-  }
-  return (
-    <>
-      <PageHeader
-        title="Revenue Management"
-        description="Understand your sales, from the first morning coffee to the last order."
-      />
-      <form className="filter-bar" onSubmit={apply}>
-        <label>
-          Branch
-          <select>
-            <option>Main Branch</option>
-          </select>
-        </label>
-        <label>
-          Date From
-          <input name="from" type="date" defaultValue="2026-09-01" required />
-        </label>
-        <label>
-          Date To
-          <input name="to" type="date" defaultValue="2026-09-14" required />
-        </label>
-        <label>
-          Compare Period
-          <select>
-            <option>Previous period</option>
-            <option>Previous year</option>
-            <option>No comparison</option>
-          </select>
-        </label>
-        <Button type="submit">
-          <SlidersHorizontal size={15} />
-          Apply
-        </Button>
-      </form>
-      <p className="mock-note" role="status">
-        {notice ||
-          "Mock preview · 1–14 September 2026 · Controls do not query live data."}
-      </p>
-      <StatCards metrics={revenueMetrics} />
-      <TrendChart title="Revenue Trend" />
-      <div className="mt-6">
-        <ProductTable detailed />
-      </div>
-      <div className="grid-equal">
-        <CategoryChart title="Revenue by Category" data={salesCategories} />
-        <CategoryChart
-          title="Revenue by Payment Method"
-          data={paymentMethods}
-        />
-      </div>
-    </>
-  );
+import { RevenueProductTable } from "@/ui/owner/finance/revenue-product-table";
+
+export function RevenueScreen({ report }: { report: FinanceReport }) {
+  return <>
+    <PageHeader title="Doanh thu" description="Theo dõi tiền đã thu từ các hóa đơn hoàn tất tại quán." />
+    <form className="filter-bar" method="get">
+      <label>Chi nhánh<select disabled><option>Chi nhánh chính</option></select></label>
+      <label>Từ ngày<input name="from" type="date" defaultValue={report.period.from} required /></label>
+      <label>Đến ngày<input name="to" type="date" defaultValue={report.period.to} required /></label>
+      <Button type="submit"><SlidersHorizontal size={15} />Áp dụng</Button>
+    </form>
+    <p className="mock-note">Dữ liệu PostgreSQL · {report.period.label} · Chỉ tính thanh toán trạng thái PAID.</p>
+    <StatCards metrics={[
+      { label: "Doanh thu đã thu", value: currency(report.revenue), note: report.period.label, tone: "green" },
+      { label: "Hóa đơn", value: report.paymentCount.toLocaleString("vi-VN"), note: "Đã thanh toán", tone: "brown" },
+      { label: "Trung bình hóa đơn", value: currency(report.averageOrderValue), note: "Doanh thu ÷ hóa đơn", tone: "gold" },
+      { label: "Tiền còn lại ước tính", value: currency(report.estimatedProfit), note: "Doanh thu − chi phí đã ghi", tone: "green" },
+    ]} />
+    <TrendChart title="Xu hướng doanh thu" data={report.revenueSeries} subtitle={`${report.period.label} · VND`} />
+    <div className="mt-6"><RevenueProductTable products={report.products} subtitle={`${report.period.label} · theo hóa đơn đã thanh toán`} /></div>
+    <div className="grid-equal">
+      <CategoryChart title="Doanh thu theo danh mục" data={report.revenueByCategory} subtitle={`Tỷ trọng doanh thu · ${report.period.label}`} />
+      <CategoryChart title="Doanh thu theo phương thức" data={report.revenueByMethod} subtitle={`Tỷ trọng doanh thu · ${report.period.label}`} />
+    </div>
+  </>;
 }

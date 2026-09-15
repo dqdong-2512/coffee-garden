@@ -1,77 +1,32 @@
-import { profitSummary, profitTrend, categoryProfit } from "@/data/profit";
+import type { FinanceReport } from "@/features/finance/types";
 import { currency } from "@/lib/utils";
 import { Card, CardHeader, PageHeader, Badge } from "@/ui/core/primitives";
 import { ProfitTrendChart, ProfitCategoryChart } from "@/ui/owner/charts";
-export function ProfitScreen() {
-  const { revenue, cogs, operating } = profitSummary;
-  const gross = revenue - cogs;
-  const net = gross - operating;
-  return (
-    <>
-      <PageHeader
-        title="Profit Overview"
-        description="A clear picture of what your business earns and what it keeps."
-        action={<Badge>September 2026 · month to date</Badge>}
-      />
-      <div className="profit-top">
-        <Card>
-          <CardHeader
-            title="From revenue to net profit"
-            subtitle="Main Branch · 1–14 September 2026 · mock financial summary"
-          />
-          <div className="profit-equation">
-            {[
-              ["", "Net revenue", revenue],
-              ["−", "Cost of goods sold (COGS)", cogs],
-              ["=", "Gross Profit", gross],
-              ["−", "Operating Expenses", operating],
-              ["=", "Net Profit", net],
-            ].map(([symbol, label, value], i) => (
-              <div
-                key={label}
-                className={i === 4 ? "net-row" : i === 2 ? "subtotal-row" : ""}
-              >
-                <span className="operator">{symbol}</span>
-                <span>{label}</span>
-                <strong>{currency(Number(value))}</strong>
-              </div>
-            ))}
-          </div>
-        </Card>
-        <div className="margin-cards">
-          <Card>
-            <p className="muted text-sm">Gross Margin</p>
-            <p className="margin-value">
-              {((gross / revenue) * 100).toFixed(1)}
-              <span>%</span>
-            </p>
-            <p className="muted text-xs">Gross profit ÷ net revenue</p>
-            <div className="margin-track">
-              <span style={{ width: `${(gross / revenue) * 100}%` }} />
-            </div>
-          </Card>
-          <Card>
-            <p className="muted text-sm">Net Margin</p>
-            <p className="margin-value">
-              {((net / revenue) * 100).toFixed(1)}
-              <span>%</span>
-            </p>
-            <p className="muted text-xs">Net profit ÷ net revenue</p>
-            <div className="margin-track">
-              <span style={{ width: `${(net / revenue) * 100}%` }} />
-            </div>
-          </Card>
-        </div>
+
+function percent(value: number, total: number) { return total ? (value / total) * 100 : 0; }
+function width(value: number) { return `${Math.max(0, Math.min(100, value))}%`; }
+
+export function ProfitScreen({ report }: { report: FinanceReport }) {
+  const afterIngredients = report.revenue - report.ingredientExpenses;
+  const ingredientMargin = percent(afterIngredients, report.revenue);
+  const cashMargin = percent(report.estimatedProfit, report.revenue);
+  return <>
+    <PageHeader title="Lợi nhuận ước tính" description="So sánh doanh thu đã thu với các khoản chi đã ghi nhận trong cùng kỳ." action={<Badge>{report.period.label}</Badge>} />
+    <div className="profit-top">
+      <Card><CardHeader title="Từ doanh thu đến dòng tiền còn lại" subtitle={`Chi nhánh chính · ${report.period.label}`} />
+        <div className="profit-equation">{[
+          ["", "Doanh thu đã thu", report.revenue], ["−", "Chi mua nguyên liệu", report.ingredientExpenses], ["=", "Còn lại sau mua nguyên liệu", afterIngredients],
+          ["−", "Chi phí vận hành khác", report.operatingExpenses], ["=", "Dòng tiền còn lại ước tính", report.estimatedProfit],
+        ].map(([symbol, label, value], index) => <div key={String(label)} className={index === 4 ? "net-row" : index === 2 ? "subtotal-row" : ""}>
+          <span className="operator">{symbol}</span><span>{label}</span><strong>{currency(Number(value))}</strong>
+        </div>)}</div>
+      </Card>
+      <div className="margin-cards">
+        <Card><p className="muted text-sm">Tỷ lệ sau mua nguyên liệu</p><p className="margin-value">{ingredientMargin.toFixed(1)}<span>%</span></p><p className="muted text-xs">Chưa phải biên lợi nhuận gộp kế toán</p><div className="margin-track"><span style={{ width: width(ingredientMargin) }} /></div></Card>
+        <Card><p className="muted text-sm">Tỷ lệ dòng tiền còn lại</p><p className="margin-value">{cashMargin.toFixed(1)}<span>%</span></p><p className="muted text-xs">Dòng tiền ước tính ÷ doanh thu</p><div className="margin-track"><span style={{ width: width(cashMargin) }} /></div></Card>
       </div>
-      <div className="grid-main">
-        <ProfitTrendChart data={profitTrend} />
-        <ProfitCategoryChart data={categoryProfit} />
-      </div>
-      <p className="mock-note">
-        Illustrative management figures, excluding tax. COGS represents consumed
-        ingredients; expense entries track payments and may cover different
-        periods.
-      </p>
-    </>
-  );
+    </div>
+    <div className="grid-main"><ProfitTrendChart data={report.profitSeries} subtitle={`${report.period.label} · doanh thu trừ chi theo từng ngày`} /><ProfitCategoryChart data={report.expensesByCategory} /></div>
+    <p className="mock-note">Báo cáo dòng tiền quản trị, chưa gồm thuế và chưa phân bổ tồn kho/giá vốn tiêu thụ. Khoản mua nguyên liệu được tính theo ngày chi.</p>
+  </>;
 }

@@ -1,114 +1,39 @@
 "use client";
+
 import { useState, type FormEvent } from "react";
+import type { ExpenseRow } from "@/features/finance/types";
+import { expenseCategories } from "@/features/finance/validation";
 import { Modal } from "@/ui/core/modal";
 import { Button } from "@/ui/core/primitives";
-import { expenseCategories } from "@/data/expenses";
-import type { Expense } from "@/types";
-export function ExpenseFormModal({
-  onClose,
-  onAdd,
-}: {
-  onClose: () => void;
-  onAdd: (expense: Expense) => void;
-}) {
+
+const labels: Record<(typeof expenseCategories)[number], string> = {
+  INGREDIENT: "Nguyên liệu", SALARY: "Lương", ELECTRICITY: "Điện", WATER: "Nước", RENT: "Mặt bằng", MARKETING: "Marketing", EQUIPMENT: "Thiết bị", OTHER: "Khác",
+};
+
+export function ExpenseFormModal({ today, onClose, onAdd }: { today: string; onClose: () => void; onAdd: (expense: ExpenseRow) => void }) {
   const [error, setError] = useState("");
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  const [busy, setBusy] = useState(false);
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); setBusy(true); setError("");
     const data = new FormData(event.currentTarget);
-    const text = (key: string) => String(data.get(key) ?? "").trim();
-    const amount = Number(data.get("amount"));
-    if (
-      !Number.isSafeInteger(amount) ||
-      amount <= 0 ||
-      !text("description") ||
-      !text("supplier")
-    ) {
-      setError("Enter a positive whole VND amount, supplier, and description.");
-      return;
-    }
-    onAdd({
-      id: crypto.randomUUID(),
-      date: text("date"),
-      category: text("category"),
-      amount,
-      supplier: text("supplier"),
-      description: text("description"),
-      payment: text("payment"),
-      createdBy: "Minh Anh",
-    });
-    onClose();
+    const response = await fetch("/api/owner/expenses", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
+      incurredAt: data.get("date"), category: data.get("category"), amount: Number(data.get("amount")), paymentMethod: data.get("paymentMethod"), supplier: data.get("supplier"), description: data.get("description"),
+    }) });
+    const result = (await response.json()) as { expense?: ExpenseRow; error?: string };
+    if (!response.ok || !result.expense) { setError(result.error ?? "Không thể lưu chi phí."); setBusy(false); return; }
+    onAdd(result.expense); onClose();
   }
-  return (
-    <Modal title="Add Expense" onClose={onClose}>
-      <form onSubmit={submit} className="expense-form">
-        <p className="muted text-sm">
-          Record a business expense. Entries stay in this preview session only.
-        </p>
-        <div className="form-grid">
-          <label>
-            Date
-            <input type="date" name="date" defaultValue="2026-09-14" required />
-          </label>
-          <label>
-            Category
-            <select name="category">
-              {expenseCategories.map((c) => (
-                <option key={c}>{c}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Amount (₫)
-            <input
-              type="number"
-              name="amount"
-              min="1"
-              max="999999999999"
-              step="1"
-              placeholder="0"
-              required
-            />
-          </label>
-          <label>
-            Payment Method
-            <select name="payment">
-              <option>Cash</option>
-              <option>Bank Transfer</option>
-              <option>QR Payment</option>
-            </select>
-          </label>
-        </div>
-        <label>
-          Supplier
-          <input
-            name="supplier"
-            placeholder="Supplier or payee name"
-            maxLength={120}
-            required
-          />
-        </label>
-        <label>
-          Description
-          <textarea
-            name="description"
-            rows={3}
-            placeholder="What was this expense for?"
-            maxLength={300}
-            required
-          />
-        </label>
-        {error && (
-          <p role="alert" className="text-sm text-red-700">
-            {error}
-          </p>
-        )}
-        <div className="flex justify-end gap-3">
-          <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="submit">Add Expense</Button>
-        </div>
-      </form>
-    </Modal>
-  );
+  return <Modal title="Thêm chi phí" onClose={onClose}><form onSubmit={submit} className="expense-form">
+    <p className="muted text-sm">Khoản chi sẽ được lưu vào PostgreSQL và cập nhật trong báo cáo.</p>
+    <div className="form-grid">
+      <label>Ngày chi<input type="date" name="date" defaultValue={today} required /></label>
+      <label>Nhóm chi<select name="category">{expenseCategories.map((code) => <option key={code} value={code}>{labels[code]}</option>)}</select></label>
+      <label>Số tiền (₫)<input type="number" name="amount" min="1" max="1000000000" step="1" placeholder="0" required /></label>
+      <label>Thanh toán<select name="paymentMethod"><option value="CASH">Tiền mặt</option><option value="BANK_TRANSFER">Chuyển khoản</option></select></label>
+    </div>
+    <label>Nhà cung cấp<input name="supplier" placeholder="Tên nhà cung cấp hoặc người nhận" maxLength={120} required /></label>
+    <label>Nội dung<textarea name="description" rows={3} placeholder="Khoản chi dùng cho việc gì?" maxLength={300} required /></label>
+    {error && <p role="alert" className="management-alert">{error}</p>}
+    <div className="flex justify-end gap-3"><Button type="button" variant="secondary" onClick={onClose}>Hủy</Button><Button type="submit" disabled={busy}>{busy ? "Đang lưu…" : "Lưu chi phí"}</Button></div>
+  </form></Modal>;
 }

@@ -118,8 +118,37 @@ async function seed() {
       update: {},
     });
   }
+
+  const owner = await prisma.staffUser.findUniqueOrThrow({
+    where: { username: process.env.SEED_OWNER_USERNAME || "owner" },
+  });
+  const sampleExpenses = [
+    ["SEED-EX001", "2026-09-14", "INGREDIENT", 1_800_000, "Đà Lạt Coffee Co.", "Cà phê hạt · 10 kg", "BANK_TRANSFER"],
+    ["SEED-EX002", "2026-09-14", "INGREDIENT", 950_000, "Chợ An Phú", "Rau và nguyên liệu đồ ăn sáng", "CASH"],
+    ["SEED-EX003", "2026-09-12", "ELECTRICITY", 4_200_000, "EVN", "Tiền điện tháng 9", "BANK_TRANSFER"],
+    ["SEED-EX004", "2026-09-10", "SALARY", 12_000_000, "Nhân sự Coffee Garden", "Tạm ứng lương", "BANK_TRANSFER"],
+    ["SEED-EX005", "2026-09-05", "MARKETING", 2_400_000, "Local Studio", "Chiến dịch quảng bá tháng 9", "BANK_TRANSFER"],
+    ["SEED-EX006", "2026-09-01", "RENT", 18_000_000, "Nguyễn Văn Hùng", "Tiền thuê mặt bằng tháng 9", "BANK_TRANSFER"],
+  ] as const;
+  for (const [externalRef, date, category, amount, supplier, description, paymentMethod] of sampleExpenses) {
+    await prisma.expense.upsert({
+      where: { externalRef },
+      create: {
+        externalRef,
+        branchId: branch.id,
+        createdById: owner.id,
+        incurredAt: new Date(`${date}T00:00:00.000Z`),
+        category,
+        amount,
+        supplier,
+        description,
+        paymentMethod,
+      },
+      update: {},
+    });
+  }
 }
 
 seed()
-  .then(() => console.log("Seed hoàn tất: 3 tài khoản, MAIN, 2 danh mục, 10 món và bàn T01–T12."))
+  .then(() => console.log("Seed hoàn tất: tài khoản, menu, bàn và 6 chi phí mẫu."))
   .finally(() => prisma.$disconnect());
