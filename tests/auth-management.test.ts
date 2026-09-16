@@ -10,6 +10,7 @@ import { paymentSchema } from "../src/features/payments/validation";
 import { createExpenseSchema } from "../src/features/finance/validation";
 import { financePeriod } from "../src/features/finance/period";
 import { stockMovementSchema } from "../src/features/inventory/validation";
+import { closeDaySchema } from "../src/features/closing/validation";
 
 test("hashes staff passwords with a unique salt and verifies them", async () => {
   const first = await hashPassword("coffee-owner-local");
@@ -82,4 +83,10 @@ test("requires a positive unit cost for stock receipts", () => {
   const ingredientId = "11111111-1111-4111-8111-111111111111";
   assert.equal(stockMovementSchema.safeParse({ type: "STOCK_IN", ingredientId, quantity: 1000, unitCost: 180, note: "Nhập cà phê" }).success, true);
   assert.equal(stockMovementSchema.safeParse({ type: "STOCK_IN", ingredientId, quantity: 1000, unitCost: 0, note: "Nhập cà phê" }).success, false);
+});
+
+test("validates cash counts before daily closing", () => {
+  assert.equal(closeDaySchema.safeParse({ businessDate: "2026-09-15", openingCash: 500000, countedCash: 1250000, note: "Ca tối" }).success, true);
+  assert.equal(closeDaySchema.safeParse({ businessDate: "2026-02-31", openingCash: 0, countedCash: 0 }).success, false);
+  assert.equal(closeDaySchema.safeParse({ businessDate: "2026-09-15", openingCash: -1, countedCash: 0 }).success, false);
 });

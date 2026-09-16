@@ -72,7 +72,7 @@ export const navigation = [
         slug: "breakfast-analytics",
         icon: Sunrise,
       },
-      { title: "Reports", slug: "reports", icon: FileText },
+      { title: "Chốt ngày", slug: "reports", icon: FileText },
     ],
   },
   {

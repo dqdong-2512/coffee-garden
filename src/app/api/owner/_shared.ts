@@ -1,6 +1,7 @@
 import { ZodError } from "zod";
 import { ManagementError } from "@/features/management/services/management-service";
 import { InventoryError } from "@/features/inventory/inventory-service";
+import { ClosingError } from "@/features/closing/closing-service";
 
 export function mutationError(error: unknown) {
   if (error instanceof SyntaxError) {
@@ -16,6 +17,9 @@ export function mutationError(error: unknown) {
     return Response.json({ code: error.code, error: error.message }, { status: error.status });
   }
   if (error instanceof InventoryError) {
+    return Response.json({ code: error.code, error: error.message }, { status: error.status });
+  }
+  if (error instanceof ClosingError) {
     return Response.json({ code: error.code, error: error.message }, { status: error.status });
   }
   return Response.json({ error: "Không thể lưu thay đổi lúc này." }, { status: 503 });

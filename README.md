@@ -20,6 +20,7 @@ Coffee Garden is a Next.js 16 application for one café, with table ordering and
 - Live Owner dashboard, revenue, expense, and estimated profit reports calculated from paid invoices, served-order recipe costs, and operating expenses.
 - Ingredient catalog, base units, low-stock thresholds, stock receipts, physical-count adjustments, and an auditable movement ledger.
 - Per-product recipes with automatic stock consumption and historical food-cost snapshots when Kitchen marks an order served.
+- Immutable daily closing with opening cash, counted cash, cash variance, transfers, voided payments, unpaid orders, history, and CSV export.
 
 ## Local setup with Supabase and Docker
 
@@ -78,6 +79,7 @@ Open these pages:
 - [Estimated profit](http://localhost:3000/owner/profit)
 - [Ingredients and recipes](http://localhost:3000/owner/inventory)
 - [Stock movements](http://localhost:3000/owner/stock)
+- [Daily closing and CSV report](http://localhost:3000/owner/reports)
 - [Product management](http://localhost:3000/owner/products)
 - [Category management](http://localhost:3000/owner/categories)
 - [Table and QR management](http://localhost:3000/owner/tables)
@@ -106,6 +108,8 @@ Use this short acceptance flow:
 15. Open Ingredients, review a product recipe, and save a small change if desired.
 16. Open Stock, record a stock receipt or physical count, and verify that it remains after reload.
 17. Serve an order in Kitchen and verify Stock contains one automatic consumption row per ingredient used by that order.
+18. Open Daily Closing, enter opening and counted cash, and verify the system calculates the expected drawer and variance.
+19. Confirm the close, reload the page, and export the closing history as CSV.
 
 The API ignores prices sent by a browser and resolves current prices from PostgreSQL. Re-sending the same `clientRequestId` returns the original order instead of creating a duplicate. Estimated profit uses the recipe cost captured when an order is served, then subtracts non-ingredient operating expenses. Ingredient purchases remain visible in expenses and cash flow without being deducted twice from estimated profit.
 
@@ -140,7 +144,7 @@ With local Supabase already started, migrated, and seeded:
 npm run test:db
 ```
 
-The test suite also verifies password hashing, signed-session tamper rejection, safe login redirects, menu/table/expense/inventory validation, period normalization, and the payment trust boundary. Database tests cover QR and POS persistence, idempotent order creation, ordered kitchen transitions, automatic recipe consumption and cost snapshots, payment amount derivation, payment reversal, staff attribution, expense persistence, and financial aggregation, then remove their test records.
+The test suite also verifies password hashing, signed-session tamper rejection, safe login redirects, menu/table/expense/inventory/daily-close validation, period normalization, and the payment trust boundary. Database tests cover QR and POS persistence, idempotent order creation, ordered kitchen transitions, automatic recipe consumption and cost snapshots, payment amount derivation, payment reversal, staff attribution, expense persistence, financial aggregation, and immutable daily closing, then remove their test records.
 
 ## Project structure
 
@@ -153,6 +157,7 @@ The test suite also verifies password hashing, signed-session tamper rejection, 
 - `src/features/payments`: payment validation and transactional collection/reversal services.
 - `src/features/finance`: expense validation/persistence, reporting periods, and live financial aggregation.
 - `src/features/inventory`: ingredient, recipe, stock movement, and inventory valuation logic.
+- `src/features/closing`: daily reconciliation calculations, persisted close snapshots, and CSV reporting.
 - `src/ui/order`: mobile customer menu, cart, and receipt UI.
 - `src/ui/kitchen`: live operational board for preparing and serving orders.
 - `src/ui/owner`: responsive Owner workspace and persisted order table.

@@ -72,6 +72,7 @@ model StaffUser {
   payments     Payment[]
   expenses     Expense[]
   stockMovements StockMovement[]
+  dailyClosures DailyClosure[]
 
   @@index([role, isActive])
 }
@@ -93,6 +94,7 @@ model Branch {
   expenses      Expense[]
   ingredients   Ingredient[]
   stockMovements StockMovement[]
+  dailyClosures  DailyClosure[]
 }
 
 model Category {
@@ -305,4 +307,33 @@ model StockMovement {
   @@unique([orderId, ingredientId])
   @@index([branchId, createdAt])
   @@index([ingredientId, createdAt])
+}
+
+model DailyClosure {
+  id                  String    @id @default(uuid()) @db.Uuid
+  branchId            String    @db.Uuid
+  createdById         String    @db.Uuid
+  businessDate        DateTime  @db.Date
+  openingCash         Int
+  cashSales           Int
+  cashExpenses        Int
+  expectedCash        Int
+  countedCash         Int
+  cashDifference      Int
+  bankTransferTotal   Int
+  paidTotal           Int
+  voidedTotal         Int
+  unpaidTotal         Int
+  paymentCount        Int
+  voidedPaymentCount  Int
+  unpaidOrderCount    Int
+  note                String?
+  closedAt            DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  branch              Branch    @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  createdBy           StaffUser @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@unique([branchId, businessDate])
+  @@index([branchId, closedAt])
+  @@index([createdById, closedAt])
 }

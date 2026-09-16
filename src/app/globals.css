@@ -729,6 +729,20 @@ textarea {
 .icon-action { display: inline-flex; padding: 8px; border-radius: 7px; color: #65705d; background: #f4f3ef; }
 .stock-positive { color: #527041; font-weight: 600; }
 .stock-negative { color: #a0443c; font-weight: 600; }
+.closing-grid { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(260px, .85fr); gap: 22px; margin-top: 24px; }
+.closing-form { padding: 8px 0 0; }
+.closing-calculation, .closing-result { display: grid; gap: 0; }
+.closing-calculation p, .closing-result p { display: flex; justify-content: space-between; gap: 18px; padding: 13px 5px; border-bottom: 1px solid var(--border); font-size: 13px; }
+.closing-calculation p:last-child, .closing-result .closing-difference { border: 0; margin-top: 5px; padding: 15px 13px; background: #eef3e8; color: #527041; border-radius: 8px; }
+.closing-calculation .has-difference, .closing-result .has-difference { background: #fff2ee; color: #a0443c; }
+.closing-result { padding-top: 10px; }
+.closing-result .closing-subtotal { font-weight: 700; }
+.closing-result small { display: flex; align-items: center; gap: 6px; margin-top: 15px; color: var(--muted); }
+.closing-exceptions { display: grid; gap: 12px; }
+.closing-exceptions > div { display: grid; gap: 7px; padding: 18px; border: 1px solid var(--border); border-radius: 10px; }
+.closing-exceptions span, .closing-exceptions small { color: var(--muted); font-size: 11px; }
+.closing-exceptions strong { font-size: 20px; }
+.closing-exceptions .closing-state { display: flex; align-items: center; gap: 7px; color: #527041; }
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -972,7 +986,8 @@ textarea {
   }
   .grid-main,
   .grid-equal,
-  .profit-top {
+  .profit-top,
+  .closing-grid {
     grid-template-columns: 1fr;
     gap: 18px;
   }

@@ -1,11 +1,7 @@
-import { Placeholder } from "@/ui/placeholder";
-export const metadata = { title: "Reports" };
-export default function Page() {
-  return (
-    <Placeholder
-      owner
-      title="Reports"
-      description="Bring together the numbers that matter."
-    />
-  );
+import { getDailyCloseData } from "@/features/closing/queries";
+import { DailyClosingScreen } from "@/ui/owner/closing/daily-closing-screen";
+export const metadata = { title: "Daily Closing" };
+export default async function Page({ searchParams }: { searchParams: Promise<{ date?: string }> }) {
+  const { date } = await searchParams;
+  return <DailyClosingScreen data={await getDailyCloseData(date)} />;
 }
