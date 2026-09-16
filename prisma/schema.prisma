@@ -65,6 +65,7 @@ model StaffUser {
   username     String    @unique
   displayName  String
   passwordHash String
+  sessionVersion Int     @default(1)
   role         StaffRole
   isActive     Boolean   @default(true)
   createdAt    DateTime  @default(now())
@@ -81,6 +82,10 @@ model Branch {
   id        String   @id @default(uuid()) @db.Uuid
   code      String   @unique
   name      String
+  address   String   @default("")
+  phone     String   @default("")
+  taxCode   String   @default("")
+  receiptFooter String @default("")
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

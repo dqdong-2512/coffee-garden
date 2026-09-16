@@ -21,6 +21,8 @@ Coffee Garden is a Next.js 16 application for one café, with table ordering and
 - Ingredient catalog, base units, low-stock thresholds, stock receipts, physical-count adjustments, and an auditable movement ledger.
 - Per-product recipes with automatic stock consumption and historical food-cost snapshots when Kitchen marks an order served.
 - Immutable daily closing with opening cash, counted cash, cash variance, transfers, voided payments, unpaid orders, history, and CSV export.
+- Owner-managed staff accounts for Owner, Cashier, and Kitchen roles, with account locking, password reset, and immediate invalidation of old sessions.
+- Single-shop settings for business name, address, phone, tax code, and receipt footer, reused by the Owner, POS, Kitchen, and table QR interfaces.
 
 ## Local setup with Supabase and Docker
 
@@ -80,6 +82,8 @@ Open these pages:
 - [Ingredients and recipes](http://localhost:3000/owner/inventory)
 - [Stock movements](http://localhost:3000/owner/stock)
 - [Daily closing and CSV report](http://localhost:3000/owner/reports)
+- [Staff and role management](http://localhost:3000/owner/staff)
+- [Shop settings](http://localhost:3000/owner/settings)
 - [Product management](http://localhost:3000/owner/products)
 - [Category management](http://localhost:3000/owner/categories)
 - [Table and QR management](http://localhost:3000/owner/tables)
@@ -110,6 +114,10 @@ Use this short acceptance flow:
 17. Serve an order in Kitchen and verify Stock contains one automatic consumption row per ingredient used by that order.
 18. Open Daily Closing, enter opening and counted cash, and verify the system calculates the expected drawer and variance.
 19. Confirm the close, reload the page, and export the closing history as CSV.
+20. Open Staff, create a temporary Cashier account, edit its role, and reset its password.
+21. Sign in with the temporary account, then lock it from Owner and verify its existing session can no longer access staff pages.
+22. Open Shop Settings and save the business name, address, phone, tax code, and receipt footer.
+23. Reload Owner, POS, Kitchen, and the table QR modal; verify the saved shop name is displayed consistently.
 
 The API ignores prices sent by a browser and resolves current prices from PostgreSQL. Re-sending the same `clientRequestId` returns the original order instead of creating a duplicate. Estimated profit uses the recipe cost captured when an order is served, then subtracts non-ingredient operating expenses. Ingredient purchases remain visible in expenses and cash flow without being deducted twice from estimated profit.
 
@@ -144,7 +152,7 @@ With local Supabase already started, migrated, and seeded:
 npm run test:db
 ```
 
-The test suite also verifies password hashing, signed-session tamper rejection, safe login redirects, menu/table/expense/inventory/daily-close validation, period normalization, and the payment trust boundary. Database tests cover QR and POS persistence, idempotent order creation, ordered kitchen transitions, automatic recipe consumption and cost snapshots, payment amount derivation, payment reversal, staff attribution, expense persistence, financial aggregation, and immutable daily closing, then remove their test records.
+The test suite also verifies password hashing, signed-session tamper rejection, safe login redirects, staff/shop/menu/table/expense/inventory/daily-close validation, period normalization, and the payment trust boundary. Database tests cover QR and POS persistence, idempotent order creation, ordered kitchen transitions, automatic recipe consumption and cost snapshots, payment amount derivation, payment reversal, staff attribution, account session invalidation, shop settings, expense persistence, financial aggregation, and immutable daily closing, then remove their test records.
 
 ## Project structure
 
@@ -158,6 +166,7 @@ The test suite also verifies password hashing, signed-session tamper rejection, 
 - `src/features/finance`: expense validation/persistence, reporting periods, and live financial aggregation.
 - `src/features/inventory`: ingredient, recipe, stock movement, and inventory valuation logic.
 - `src/features/closing`: daily reconciliation calculations, persisted close snapshots, and CSV reporting.
+- `src/features/settings`: staff account safety rules, session invalidation, and single-shop configuration.
 - `src/ui/order`: mobile customer menu, cart, and receipt UI.
 - `src/ui/kitchen`: live operational board for preparing and serving orders.
 - `src/ui/owner`: responsive Owner workspace and persisted order table.
@@ -169,4 +178,4 @@ The test suite also verifies password hashing, signed-session tamper rejection, 
 
 Use Vercel preview deployments while testing and a managed Supabase PostgreSQL project in Southeast Asia (Singapore) to keep the database close to customers in Vietnam. Vercel Hobby is restricted to personal, non-commercial use, so move the live shop to Pro or another commercial host. See the official [Vercel plan guidance](https://vercel.com/docs/plans/hobby) and [Supabase region list](https://supabase.com/docs/guides/platform/regions).
 
-Set `DATABASE_URL` to the pooled runtime URL and `DIRECT_URL` to the direct database URL used by Prisma migrations, following [Prisma's connection guidance](https://www.prisma.io/docs/orm/prisma-client/setup-and-configuration/databases-connections). Set `PUBLIC_APP_URL` to the public HTTPS origin so downloaded table QR codes point to the production site. Use unique production passwords for Owner, Kitchen and Cashier plus a random `AUTH_SESSION_SECRET` of at least 32 characters, then run `npm run db:deploy` and `npm run db:seed` during the first release. Bank transfers in Step 5 are confirmed manually by staff; no banking API or automatic VietQR reconciliation is enabled.
+Set `DATABASE_URL` to the pooled runtime URL and `DIRECT_URL` to the direct database URL used by Prisma migrations, following [Prisma's connection guidance](https://www.prisma.io/docs/orm/prisma-client/setup-and-configuration/databases-connections). Set `PUBLIC_APP_URL` to the public HTTPS origin so downloaded table QR codes point to the production site. Use unique initial production passwords for Owner, Kitchen and Cashier plus a random `AUTH_SESSION_SECRET` of at least 32 characters, then run `npm run db:deploy` and `npm run db:seed` during the first release. After the first Owner login, change all seed passwords from Staff and enter the real shop information in Settings. Bank transfers in Step 5 are confirmed manually by staff; no banking API or automatic VietQR reconciliation is enabled.

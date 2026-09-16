@@ -79,7 +79,11 @@ async function seed() {
 
   const branch = await prisma.branch.upsert({
     where: { code: "MAIN" },
-    create: { code: "MAIN", name: "Coffee Garden - Main Branch" },
+    create: {
+      code: "MAIN",
+      name: "Coffee Garden",
+      receiptFooter: "Cảm ơn quý khách và hẹn gặp lại!",
+    },
     update: {},
   });
 

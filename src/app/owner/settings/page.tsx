@@ -1,11 +1,10 @@
-import { Placeholder } from "@/ui/placeholder";
-export const metadata = { title: "Settings" };
-export default function Page() {
-  return (
-    <Placeholder
-      owner
-      title="Settings"
-      description="Manage your workspace preferences."
-    />
-  );
+import { getShopSettings } from "@/features/settings/queries";
+import { requirePageUser } from "@/lib/auth/authorization";
+import { ShopSettingsScreen } from "@/ui/owner/settings/shop-settings-screen";
+
+export const metadata = { title: "Cấu hình quán" };
+
+export default async function Page() {
+  await requirePageUser(["OWNER"], "/owner/settings");
+  return <ShopSettingsScreen settings={await getShopSettings()} />;
 }

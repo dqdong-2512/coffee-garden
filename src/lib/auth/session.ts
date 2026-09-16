@@ -8,6 +8,7 @@ export const SESSION_MAX_AGE = 60 * 60 * 12;
 export type SessionPayload = {
   sub: string;
   role: StaffRole;
+  ver: number;
   exp: number;
 };
 
@@ -23,10 +24,11 @@ function sign(value: string) {
   return createHmac("sha256", sessionSecret()).update(value).digest("base64url");
 }
 
-export function createSessionToken(user: { id: string; role: StaffRole }) {
+export function createSessionToken(user: { id: string; role: StaffRole; sessionVersion: number }) {
   const payload: SessionPayload = {
     sub: user.id,
     role: user.role,
+    ver: user.sessionVersion,
     exp: Math.floor(Date.now() / 1000) + SESSION_MAX_AGE,
   };
   const encoded = Buffer.from(JSON.stringify(payload)).toString("base64url");
@@ -50,6 +52,8 @@ export function verifySessionToken(token?: string | null): SessionPayload | null
     if (
       typeof payload.sub !== "string" ||
       !["OWNER", "KITCHEN", "CASHIER"].includes(payload.role ?? "") ||
+      typeof payload.ver !== "number" ||
+      !Number.isInteger(payload.ver) ||
       typeof payload.exp !== "number" ||
       payload.exp <= Math.floor(Date.now() / 1000)
     ) {

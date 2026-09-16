@@ -1,3 +1,4 @@
+import { getShopSettings } from "@/features/settings/queries";
 import { requirePageUser } from "@/lib/auth/authorization";
 import { OwnerShell } from "@/ui/owner/layout/owner-shell";
 
@@ -8,6 +9,9 @@ export default async function OwnerLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = await requirePageUser(["OWNER"], "/owner/dashboard");
-  return <OwnerShell user={user}>{children}</OwnerShell>;
+  const [user, shop] = await Promise.all([
+    requirePageUser(["OWNER"], "/owner/dashboard"),
+    getShopSettings(),
+  ]);
+  return <OwnerShell user={user} shopName={shop.name}>{children}</OwnerShell>;
 }

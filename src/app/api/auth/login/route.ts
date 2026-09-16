@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     const response = NextResponse.json({ redirectTo: safeNextPath(input.data.next, fallback) });
     response.cookies.set(
       SESSION_COOKIE,
-      createSessionToken({ id: user.id, role: user.role }),
+      createSessionToken({ id: user.id, role: user.role, sessionVersion: user.sessionVersion }),
       sessionCookieOptions,
     );
     return response;

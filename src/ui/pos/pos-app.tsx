@@ -156,7 +156,7 @@ export function PosApp({
   return (
     <main className="pos-page">
       <header className="pos-header">
-        <div className="pos-brand"><span><Coffee size={21} /></span><div><strong>Coffee Garden</strong><small>STAFF POS</small></div></div>
+        <div className="pos-brand"><span><Coffee size={21} /></span><div><strong>{catalog.branch.name}</strong><small>STAFF POS</small></div></div>
         <div className="pos-header-actions">
           {user.role === "OWNER" && <Link href="/kitchen" className="pos-header-link"><ChefHat size={16} />Bếp</Link>}
           {user.role === "OWNER" && <Link href="/owner/payments" className="pos-header-link"><ReceiptText size={16} />Đối soát</Link>}

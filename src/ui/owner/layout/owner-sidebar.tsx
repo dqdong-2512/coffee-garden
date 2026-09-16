@@ -4,23 +4,23 @@ import { usePathname } from "next/navigation";
 import { Coffee, ArrowUpRight } from "lucide-react";
 import { navigation } from "./navigation";
 import { cn } from "@/lib/utils";
-export function Brand() {
+export function Brand({ shopName }: { shopName: string }) {
   return (
     <Link href="/" className="brand">
       <span className="brand-icon">
         <Coffee size={23} />
       </span>
       <span>
-        Coffee Garden<small>OWNER WORKSPACE</small>
+        {shopName}<small>OWNER WORKSPACE</small>
       </span>
     </Link>
   );
 }
-export function OwnerSidebar({ onNavigate }: { onNavigate?: () => void }) {
+export function OwnerSidebar({ shopName, onNavigate }: { shopName: string; onNavigate?: () => void }) {
   const path = usePathname();
   return (
     <>
-      <Brand />
+      <Brand shopName={shopName} />
       <nav aria-label="Owner navigation" className="sidebar-nav">
         {navigation.map((section) => (
           <div className="nav-group" key={section.group}>

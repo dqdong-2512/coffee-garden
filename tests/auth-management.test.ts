@@ -11,6 +11,10 @@ import { createExpenseSchema } from "../src/features/finance/validation";
 import { financePeriod } from "../src/features/finance/period";
 import { stockMovementSchema } from "../src/features/inventory/validation";
 import { closeDaySchema } from "../src/features/closing/validation";
+import {
+  createStaffSchema,
+  updateShopSettingsSchema,
+} from "../src/features/settings/validation";
 
 test("hashes staff passwords with a unique salt and verifies them", async () => {
   const first = await hashPassword("coffee-owner-local");
@@ -28,8 +32,10 @@ test("signs and rejects tampered staff session tokens", async () => {
   const token = createSessionToken({
     id: "11111111-1111-4111-8111-111111111111",
     role: "OWNER",
+    sessionVersion: 1,
   });
   assert.equal(verifySessionToken(token)?.role, "OWNER");
+  assert.equal(verifySessionToken(token)?.ver, 1);
   assert.equal(verifySessionToken(`${token}tampered`), null);
 });
 
@@ -89,4 +95,20 @@ test("validates cash counts before daily closing", () => {
   assert.equal(closeDaySchema.safeParse({ businessDate: "2026-09-15", openingCash: 500000, countedCash: 1250000, note: "Ca tối" }).success, true);
   assert.equal(closeDaySchema.safeParse({ businessDate: "2026-02-31", openingCash: 0, countedCash: 0 }).success, false);
   assert.equal(closeDaySchema.safeParse({ businessDate: "2026-09-15", openingCash: -1, countedCash: 0 }).success, false);
+});
+
+test("validates staff credentials and shop settings", () => {
+  const staff = createStaffSchema.parse({
+    username: " cashier.02 ", displayName: "Thu ngân ca tối", role: "CASHIER", password: "coffee2026",
+  });
+  assert.equal(staff.username, "cashier.02");
+  assert.equal(createStaffSchema.safeParse({ ...staff, password: "short" }).success, false);
+  assert.equal(createStaffSchema.safeParse({ ...staff, username: "Tên Có Dấu" }).success, false);
+  assert.equal(updateShopSettingsSchema.safeParse({
+    name: "Coffee Garden", address: "12 Đường Vườn", phone: "0901 234 567",
+    taxCode: "0312345678", receiptFooter: "Cảm ơn quý khách!",
+  }).success, true);
+  assert.equal(updateShopSettingsSchema.safeParse({
+    name: "Coffee Garden", address: "", phone: "abc", taxCode: "", receiptFooter: "",
+  }).success, false);
 });

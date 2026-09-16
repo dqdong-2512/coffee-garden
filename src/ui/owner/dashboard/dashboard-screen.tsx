@@ -5,10 +5,10 @@ import { Card, PageHeader, StatCards } from "@/ui/core/primitives";
 import { TrendChart, CategoryChart, HourChart } from "@/ui/owner/charts";
 import { RevenueProductTable } from "@/ui/owner/finance/revenue-product-table";
 
-export function DashboardScreen({ today, month, userName }: { today: FinanceReport; month: FinanceReport; userName: string }) {
+export function DashboardScreen({ today, month, userName, shopName }: { today: FinanceReport; month: FinanceReport; userName: string; shopName: string }) {
   const method = (name: string) => month.revenueByMethod.find((item) => item.name === name)?.value ?? 0;
   return <>
-    <PageHeader title="Tổng quan hoạt động" description={`Xin chào ${userName}. Đây là tình hình Coffee Garden hôm nay.`} action={<div className="date-chip"><CalendarDays size={16} />{today.period.label.split(" – ")[0]}</div>} />
+    <PageHeader title="Tổng quan hoạt động" description={`Xin chào ${userName}. Đây là tình hình ${shopName} hôm nay.`} action={<div className="date-chip"><CalendarDays size={16} />{today.period.label.split(" – ")[0]}</div>} />
     <div className="section-eyebrow"><span>TỔNG QUAN HÔM NAY</span><span className="flex items-center gap-2"><span className="status-dot" /> Chi nhánh chính</span></div>
     <StatCards metrics={[
       { label: "Doanh thu hôm nay", value: currency(today.revenue), note: "Đã thanh toán", tone: "green" },

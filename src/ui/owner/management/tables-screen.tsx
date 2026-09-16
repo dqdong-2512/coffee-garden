@@ -9,7 +9,7 @@ import { Modal } from "@/ui/core/modal";
 
 type TableResponse = { table?: Omit<ManagedTable, "orderCount">; error?: string };
 
-export function TablesScreen({ initialTables }: { initialTables: ManagedTable[] }) {
+export function TablesScreen({ initialTables, shopName }: { initialTables: ManagedTable[]; shopName: string }) {
   const [tables, setTables] = useState(initialTables);
   const [editing, setEditing] = useState<ManagedTable | null | undefined>(undefined);
   const [qrTable, setQrTable] = useState<ManagedTable | null>(null);
@@ -76,7 +76,7 @@ export function TablesScreen({ initialTables }: { initialTables: ManagedTable[] 
         <Modal title={`QR ${qrTable.name}`} onClose={() => setQrTable(null)}>
           <div className="table-qr-card">
             <Image unoptimized width={260} height={260} src={`/api/owner/tables/${qrTable.id}/qr`} alt={`Mã QR order ${qrTable.name}`} />
-            <strong>Coffee Garden · {qrTable.name}</strong>
+            <strong>{shopName} · {qrTable.name}</strong>
             <code>/order/{qrTable.code}</code>
             <p>In mã này và đặt trên bàn. Khách quét sẽ mở menu đúng mã bàn.</p>
             <div className="flex flex-wrap justify-center gap-2">

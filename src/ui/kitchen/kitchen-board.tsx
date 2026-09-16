@@ -61,10 +61,12 @@ export function KitchenBoard({
   initialOrders,
   databaseAvailable,
   user,
+  shopName,
 }: {
   initialOrders: KitchenOrder[];
   databaseAvailable: boolean;
   user: AuthenticatedUser;
+  shopName: string;
 }) {
   const [orders, setOrders] = useState(initialOrders);
   const [connected, setConnected] = useState(databaseAvailable);
@@ -172,7 +174,7 @@ export function KitchenBoard({
       <header className="kitchen-header">
         <div className="kitchen-brand">
           <span><UtensilsCrossed size={21} /></span>
-          <div><strong>Coffee Garden</strong><small>KITCHEN & BAR</small></div>
+          <div><strong>{shopName}</strong><small>KITCHEN & BAR</small></div>
         </div>
         <div className="kitchen-summary">
           <span><b>{activeOrders.length}</b> order đang xử lý</span>

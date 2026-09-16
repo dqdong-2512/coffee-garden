@@ -16,13 +16,13 @@ export function homeForRole(role: StaffRole) {
   return "/pos";
 }
 
-async function activeUser(session: { sub: string; role: StaffRole } | null) {
+async function activeUser(session: { sub: string; role: StaffRole; ver: number } | null) {
   if (!session) return null;
   const user = await prisma.staffUser.findUnique({
     where: { id: session.sub },
-    select: { id: true, username: true, displayName: true, role: true, isActive: true },
+    select: { id: true, username: true, displayName: true, role: true, isActive: true, sessionVersion: true },
   });
-  if (!user?.isActive || user.role !== session.role) return null;
+  if (!user?.isActive || user.role !== session.role || user.sessionVersion !== session.ver) return null;
   return {
     id: user.id,
     username: user.username,

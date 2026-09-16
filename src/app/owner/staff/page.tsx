@@ -1,11 +1,10 @@
-import { Placeholder } from "@/ui/placeholder";
-export const metadata = { title: "Staff" };
-export default function Page() {
-  return (
-    <Placeholder
-      owner
-      title="Staff"
-      description="Organize your team and staff responsibilities."
-    />
-  );
+import { listStaff } from "@/features/settings/queries";
+import { requirePageUser } from "@/lib/auth/authorization";
+import { StaffScreen } from "@/ui/owner/settings/staff-screen";
+
+export const metadata = { title: "Nhân viên" };
+
+export default async function Page() {
+  const user = await requirePageUser(["OWNER"], "/owner/staff");
+  return <StaffScreen staff={await listStaff()} currentUserId={user.id} />;
 }

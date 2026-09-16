@@ -12,9 +12,11 @@ import type { AuthenticatedUser } from "@/lib/auth/authorization";
 export function OwnerShell({
   children,
   user,
+  shopName,
 }: {
   children: ReactNode;
   user: AuthenticatedUser;
+  shopName: string;
 }) {
   const [open, setOpen] = useState(false);
   const [panel, setPanel] = useState<"notifications" | "user" | null>(null);
@@ -34,11 +36,11 @@ export function OwnerShell({
         Skip to content
       </a>
       <aside className="desktop-sidebar">
-        <OwnerSidebar />
+        <OwnerSidebar shopName={shopName} />
       </aside>
       {open && (
         <Modal title="Navigation" drawer onClose={() => setOpen(false)}>
-          <OwnerSidebar onNavigate={() => setOpen(false)} />
+          <OwnerSidebar shopName={shopName} onNavigate={() => setOpen(false)} />
         </Modal>
       )}
       <div className="owner-body">
@@ -102,7 +104,7 @@ export function OwnerShell({
                 <>
                   <p>{user.displayName} · Owner</p>
                   <p className="muted my-3 text-sm">
-                    @{user.username} · Coffee Garden
+                    @{user.username} · {shopName}
                   </p>
                   <div className="flex flex-wrap gap-2">
                     <Link href="/" className="button" onClick={() => setPanel(null)}>
@@ -118,7 +120,7 @@ export function OwnerShell({
         <main id="main-content" className="owner-content">
           {children}
           <footer className="page-footer">
-            <span>© 2026 Coffee Garden</span>
+            <span>© 2026 {shopName}</span>
             <span>
               Made for a better everyday.{" "}
               <span className="ml-2 text-green-800">♧</span>
