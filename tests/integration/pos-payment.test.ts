@@ -8,6 +8,7 @@ import {
   recordPayment,
   voidPayment,
 } from "../../src/features/payments/services/payment-service";
+import { getPrintableOrder } from "../../src/features/printing/queries";
 import { prisma } from "../../src/lib/db/prisma";
 
 test("persists a POS order and derives its payment amount on the server", async (context) => {
@@ -55,4 +56,10 @@ test("persists a POS order and derives its payment amount on the server", async 
   assert.equal(replacement.payment.status, "PAID");
   assert.equal(replacement.payment.method, "BANK_TRANSFER");
   assert.equal(replacement.payment.reference, "TEST-001");
+
+  const printable = await getPrintableOrder(result.order.id);
+  assert.equal(printable?.orderNo, result.order.orderNo);
+  assert.equal(printable?.items[0]?.productName, product.name);
+  assert.equal(printable?.payment?.amount, result.order.totalAmount);
+  assert.equal(printable?.payment?.createdByName, cashier.displayName);
 });

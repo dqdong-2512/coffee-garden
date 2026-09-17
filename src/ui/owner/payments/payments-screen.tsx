@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Banknote, CreditCard, RotateCcw, WalletCards } from "lucide-react";
+import { Banknote, CreditCard, Printer, RotateCcw, WalletCards } from "lucide-react";
 import type { PaymentOrder } from "@/features/pos/types";
 import { formatVnd } from "@/lib/utils";
 import { Badge, Card, DataTable, PageHeader } from "@/ui/core/primitives";
@@ -72,7 +72,7 @@ export function PaymentsScreen({ initialOrders }: { initialOrders: PaymentOrder[
           <td>{order.tableName}</td><td>{order.source === "POS" ? "POS" : "QR bàn"}</td><td className="font-semibold">{formatVnd(order.totalAmount)}</td>
           <td>{order.payment?.method === "CASH" ? "Tiền mặt" : order.payment?.method === "BANK_TRANSFER" ? "Chuyển khoản" : "—"}</td>
           <td><Badge>{order.payment?.status === "PAID" ? "Đã thu" : order.payment?.status === "VOIDED" ? "Đã hủy thu" : order.status === "CANCELLED" ? "Order đã hủy" : "Chưa thu"}</Badge>{order.payment?.status === "PAID" && <small>{order.payment.createdByName}</small>}</td>
-          <td>{order.payment?.status === "PAID" ? <button className="payment-action secondary" onClick={() => setVoiding(order)}><RotateCcw size={14} />Hủy thu</button> : order.status !== "CANCELLED" ? <button className="payment-action" onClick={() => setCollecting(order)}><CreditCard size={14} />Thu tiền</button> : "—"}</td>
+          <td><div className="payment-actions"><a className="payment-action" href={`/print/receipt/${order.id}`} target="_blank" rel="noreferrer"><Printer size={14} />In</a>{order.payment?.status === "PAID" ? <button className="payment-action secondary" onClick={() => setVoiding(order)}><RotateCcw size={14} />Hủy thu</button> : order.status !== "CANCELLED" ? <button className="payment-action" onClick={() => setCollecting(order)}><CreditCard size={14} />Thu tiền</button> : null}</div></td>
         </tr>)}
       </DataTable>
     </Card>

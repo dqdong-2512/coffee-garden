@@ -23,6 +23,7 @@ Coffee Garden is a Next.js 16 application for one café, with table ordering and
 - Immutable daily closing with opening cash, counted cash, cash variance, transfers, voided payments, unpaid orders, history, and CSV export.
 - Owner-managed staff accounts for Owner, Cashier, and Kitchen roles, with account locking, password reset, and immediate invalidation of old sessions.
 - Single-shop settings for business name, address, phone, tax code, and receipt footer, reused by the Owner, POS, Kitchen, and table QR interfaces.
+- Dedicated 80 mm receipt and Kitchen ticket views with persisted order details, notes, payment state, browser printing, and reprint actions.
 
 ## Local setup with Supabase and Docker
 
@@ -118,6 +119,9 @@ Use this short acceptance flow:
 21. Sign in with the temporary account, then lock it from Owner and verify its existing session can no longer access staff pages.
 22. Open Shop Settings and save the business name, address, phone, tax code, and receipt footer.
 23. Reload Owner, POS, Kitchen, and the table QR modal; verify the saved shop name is displayed consistently.
+24. Create an order in POS and use the success actions to print its customer receipt and Kitchen ticket.
+25. Open Payments and reprint an older receipt; verify the payment method, staff name, items, notes, and shop information.
+26. Open Kitchen and print a ticket from any active order; verify the 80 mm preview emphasizes the table, quantities, and preparation notes.
 
 The API ignores prices sent by a browser and resolves current prices from PostgreSQL. Re-sending the same `clientRequestId` returns the original order instead of creating a duplicate. Estimated profit uses the recipe cost captured when an order is served, then subtracts non-ingredient operating expenses. Ingredient purchases remain visible in expenses and cash flow without being deducted twice from estimated profit.
 
@@ -167,8 +171,10 @@ The test suite also verifies password hashing, signed-session tamper rejection, 
 - `src/features/inventory`: ingredient, recipe, stock movement, and inventory valuation logic.
 - `src/features/closing`: daily reconciliation calculations, persisted close snapshots, and CSV reporting.
 - `src/features/settings`: staff account safety rules, session invalidation, and single-shop configuration.
+- `src/features/printing`: authorized receipt and Kitchen-ticket projections from persisted order data.
 - `src/ui/order`: mobile customer menu, cart, and receipt UI.
 - `src/ui/kitchen`: live operational board for preparing and serving orders.
+- `src/ui/print`: browser-printable 80 mm customer receipts and Kitchen tickets.
 - `src/ui/owner`: responsive Owner workspace and persisted order table.
 - `src/lib/db`: shared Prisma client using the PostgreSQL driver adapter.
 - `prisma`: schema, migration, and explicit seed.

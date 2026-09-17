@@ -9,6 +9,7 @@ import {
   Clock3,
   Coffee,
   RefreshCw,
+  Printer,
   RotateCcw,
   UtensilsCrossed,
   XCircle,
@@ -245,8 +246,9 @@ export function KitchenBoard({
                       {order.customerNote && (
                         <p className="kitchen-note"><b>Ghi chú:</b> {order.customerNote}</p>
                       )}
-                      {action && ActionIcon && (
-                        <div className="kitchen-ticket-actions">
+                      <div className="kitchen-ticket-actions">
+                        <a href={`/print/kitchen/${order.id}?autoprint=1`} target="_blank" rel="noreferrer" aria-label={`In phiếu bếp ${order.orderNo}`} title="In phiếu bếp"><Printer size={17} /></a>
+                        {action && ActionIcon && <>
                           <button
                             type="button"
                             className="kitchen-cancel"
@@ -267,8 +269,8 @@ export function KitchenBoard({
                             )}
                             {busyId === order.id ? "Đang lưu…" : action.label}
                           </button>
-                        </div>
-                      )}
+                        </>}
+                      </div>
                     </article>
                   );
                 })}

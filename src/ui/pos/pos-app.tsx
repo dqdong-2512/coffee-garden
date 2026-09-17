@@ -11,6 +11,7 @@ import {
   Minus,
   Plus,
   ReceiptText,
+  Printer,
   Search,
   ShoppingCart,
   Trash2,
@@ -204,7 +205,7 @@ export function PosApp({
         </aside>
       </section>
 
-      {success && <div className="pos-toast" role="status"><CheckCircle2 size={19} /><span><b>{success.orderNo}</b> đã gửi đến bếp · {success.tableName}</span><button onClick={() => setSuccess(null)}>×</button></div>}
+      {success && <div className="pos-toast" role="status"><CheckCircle2 size={19} /><span><b>{success.orderNo}</b> đã gửi đến bếp · {success.tableName}</span><a href={`/print/receipt/${success.id}?autoprint=1`} target="_blank" rel="noreferrer"><Printer size={15} />Hóa đơn</a><a href={`/print/kitchen/${success.id}?autoprint=1`} target="_blank" rel="noreferrer"><ChefHat size={15} />Phiếu bếp</a><button aria-label="Đóng thông báo" onClick={() => setSuccess(null)}>×</button></div>}
       {paymentsOpen && <Modal title={`Chờ thanh toán · ${unpaid.length}`} onClose={() => setPaymentsOpen(false)}>
         <div className="pos-payment-list">
           {unpaid.map((order) => <article key={order.id}><div><strong>{order.orderNo}</strong><span>{order.tableName} · {formatVnd(order.totalAmount)}</span></div><div><button disabled={paymentBusy === order.id} onClick={() => collect(order, "CASH")}><Banknote size={15} />Tiền mặt</button><button disabled={paymentBusy === order.id} onClick={() => collect(order, "BANK_TRANSFER")}><CreditCard size={15} />Chuyển khoản</button></div></article>)}
