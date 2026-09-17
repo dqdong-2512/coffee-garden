@@ -24,6 +24,7 @@ Coffee Garden is a Next.js 16 application for one café, with table ordering and
 - Owner-managed staff accounts for Owner, Cashier, and Kitchen roles, with account locking, password reset, and immediate invalidation of old sessions.
 - Single-shop settings for business name, address, phone, tax code, and receipt footer, reused by the Owner, POS, Kitchen, and table QR interfaces.
 - Dedicated 80 mm receipt and Kitchen ticket views with persisted order details, notes, payment state, browser printing, and reprint actions.
+- Production preflight and smoke checks, database health monitoring, security headers, private operational routes, and a 3–7 day launch runbook.
 
 ## Local setup with Supabase and Docker
 
@@ -89,6 +90,7 @@ Open these pages:
 - [Category management](http://localhost:3000/owner/categories)
 - [Table and QR management](http://localhost:3000/owner/tables)
 - [Local Supabase Studio](http://127.0.0.1:54323)
+- [Application and database health](http://localhost:3000/api/health)
 
 Valid seeded table codes are `T01` through `T12`. The local PostgreSQL connection is `postgresql://postgres:postgres@127.0.0.1:54322/postgres` and is already present in `.env.example`.
 
@@ -136,6 +138,9 @@ npm run db:seed       # insert missing sample catalog/table data
 npm run db:reset      # rebuild the Prisma schema and seed data (destructive locally)
 npm run db:studio     # open Prisma Studio
 npm run db:validate   # validate the Prisma schema
+npm run production:check       # validate production runtime variables
+npm run production:seed-check  # also validate first-release seed passwords
+npm run production:smoke -- https://your-domain.example
 ```
 
 The seed is explicit and idempotent: it creates missing rows but does not overwrite later menu edits.
@@ -177,10 +182,14 @@ The test suite also verifies password hashing, signed-session tamper rejection, 
 - `src/ui/print`: browser-printable 80 mm customer receipts and Kitchen tickets.
 - `src/ui/owner`: responsive Owner workspace and persisted order table.
 - `src/lib/db`: shared Prisma client using the PostgreSQL driver adapter.
+- `src/lib/config`: production environment validation used before release.
 - `prisma`: schema, migration, and explicit seed.
 - `supabase`: local Docker stack configuration.
+- `docs/DEPLOYMENT.md`: production environment, backup, pilot, health-check, and rollback runbook.
 
 ## Deployment direction
+
+Follow the complete [deployment and pilot runbook](docs/DEPLOYMENT.md) before connecting a real domain or accepting live orders.
 
 Use Vercel preview deployments while testing and a managed Supabase PostgreSQL project in Southeast Asia (Singapore) to keep the database close to customers in Vietnam. Vercel Hobby is restricted to personal, non-commercial use, so move the live shop to Pro or another commercial host. See the official [Vercel plan guidance](https://vercel.com/docs/plans/hobby) and [Supabase region list](https://supabase.com/docs/guides/platform/regions).
 

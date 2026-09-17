@@ -1893,6 +1893,14 @@ label.pos-search { display: flex; width: min(280px, 45%); min-height: 42px; flex
   .print-page { min-height: 0; padding: 0; background: white; }
   .print-paper { width: 80mm; max-width: none; margin: 0; padding: 5mm 4mm; border: 0; box-shadow: none; }
 }
+
+/* Production fallback pages */
+.system-state { display: grid; min-height: 100dvh; place-items: center; align-content: center; gap: 11px; padding: 28px; background: #f3f1eb; color: #354039; text-align: center; }
+.system-state > svg { box-sizing: content-box; padding: 13px; border-radius: 14px; background: #365f45; color: white; }
+.system-state > p { margin: 8px 0 0; color: #83907f; font-size: 9px; font-weight: 800; letter-spacing: 2px; }
+.system-state > h1 { margin: 0; font-family: Georgia, serif; font-size: 29px; font-weight: 500; }
+.system-state > span { max-width: 460px; color: #778079; font-size: 12px; line-height: 1.7; }
+.system-state > .button { margin-top: 8px; }
 .payment-amount { display: flex; align-items: center; justify-content: space-between; padding: 15px; border-radius: 10px; background: #f1f4ee; }
 .payment-amount strong { color: #365f45; font-size: 18px; }
 .payment-void-submit { background: #a24c3d; border-color: #a24c3d; }

@@ -16,6 +16,9 @@
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
     "db:validate": "prisma validate",
+    "production:check": "tsx scripts/production-check.ts",
+    "production:seed-check": "tsx scripts/production-check.ts --with-seed",
+    "production:smoke": "tsx scripts/smoke-test.ts",
     "test": "tsx --test tests/*.test.ts",
     "test:db": "tsx --test tests/integration/*.test.ts"
   },

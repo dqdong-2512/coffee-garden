@@ -20,6 +20,7 @@ export function OwnerShell({
 }) {
   const [open, setOpen] = useState(false);
   const [panel, setPanel] = useState<"notifications" | "user" | null>(null);
+  const development = process.env.NODE_ENV !== "production";
   const path = usePathname();
   const title =
     navigation.flatMap((s) => s.items).find((i) => path === `/owner/${i.slug}`)
@@ -107,9 +108,7 @@ export function OwnerShell({
                     @{user.username} · {shopName}
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    <Link href="/" className="button" onClick={() => setPanel(null)}>
-                      Trang phát triển
-                    </Link>
+                    {development && <Link href="/" className="button" onClick={() => setPanel(null)}>Trang phát triển</Link>}
                     <LogoutButton />
                   </div>
                 </>

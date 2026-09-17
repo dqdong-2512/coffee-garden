@@ -18,6 +18,7 @@ export function Brand({ shopName }: { shopName: string }) {
 }
 export function OwnerSidebar({ shopName, onNavigate }: { shopName: string; onNavigate?: () => void }) {
   const path = usePathname();
+  const development = process.env.NODE_ENV !== "production";
   return (
     <>
       <Brand shopName={shopName} />
@@ -48,12 +49,12 @@ export function OwnerSidebar({ shopName, onNavigate }: { shopName: string; onNav
           </div>
         ))}
       </nav>
-      <div className="sidebar-foot">
+      {development && <div className="sidebar-foot">
         <span className="status-dot" /> UI preview{" "}
         <Link href="/" aria-label="Development home">
           <ArrowUpRight size={16} />
         </Link>
-      </div>
+      </div>}
     </>
   );
 }
