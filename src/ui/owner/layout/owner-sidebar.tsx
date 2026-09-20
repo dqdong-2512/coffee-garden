@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { Coffee, ArrowUpRight } from "lucide-react";
 import { navigation } from "./navigation";
 import { cn } from "@/lib/utils";
+import type { AuthenticatedUser } from "@/lib/auth/authorization";
 export function Brand({ shopName }: { shopName: string }) {
   return (
     <Link href="/" className="brand">
@@ -11,19 +12,22 @@ export function Brand({ shopName }: { shopName: string }) {
         <Coffee size={23} />
       </span>
       <span>
-        {shopName}<small>OWNER WORKSPACE</small>
+        {shopName}<small>MANAGEMENT WORKSPACE</small>
       </span>
     </Link>
   );
 }
-export function OwnerSidebar({ shopName, onNavigate }: { shopName: string; onNavigate?: () => void }) {
+export function OwnerSidebar({ shopName, user, onNavigate }: { shopName: string; user: AuthenticatedUser; onNavigate?: () => void }) {
   const path = usePathname();
   const development = process.env.NODE_ENV !== "production";
   return (
     <>
       <Brand shopName={shopName} />
-      <nav aria-label="Owner navigation" className="sidebar-nav">
-        {navigation.map((section) => (
+      <nav aria-label="Management navigation" className="sidebar-nav">
+        {navigation.map((section) => ({
+          ...section,
+          items: section.items.filter((item) => !("superAdminOnly" in item) || user.isSuperAdmin),
+        })).filter((section) => section.items.length).map((section) => (
           <div className="nav-group" key={section.group}>
             {section.group && <p className="nav-label">{section.group}</p>}
             {section.items.map((item) => (

@@ -11,7 +11,7 @@ export default async function Page({ params, searchParams }: {
   searchParams: Promise<{ autoprint?: string }>;
 }) {
   const { orderId } = await params;
-  await requirePageUser(["OWNER", "CASHIER"], `/print/receipt/${orderId}`);
+  await requirePageUser(["ORDER", "AUDIT"], `/print/receipt/${orderId}`);
   const order = await getPrintableOrder(orderId);
   if (!order) notFound();
   const { autoprint } = await searchParams;

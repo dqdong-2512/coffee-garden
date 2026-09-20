@@ -46,17 +46,36 @@ async function seed() {
     hashPassword(kitchenPassword),
     hashPassword(cashierPassword),
   ]);
-  await prisma.staffUser.upsert({
-    where: { username: process.env.SEED_OWNER_USERNAME || "owner" },
+  const permissionDefinitions = [
+    ["ORDER", "Gọi món", "Chọn bàn, tạo order và ghi nhận thanh toán tại POS.", 10],
+    ["KITCHEN", "Bếp", "Nhận order và cập nhật tiến độ chế biến.", 20],
+    ["AUDIT", "Kiểm toán", "Xem và quản lý báo cáo, tài chính, tồn kho và vận hành.", 30],
+  ] as const;
+  for (const [code, name, description, displayOrder] of permissionDefinitions) {
+    await prisma.permission.upsert({
+      where: { code },
+      create: { code, name, description, displayOrder },
+      update: { name, description, displayOrder },
+    });
+  }
+
+  const ownerUsername = process.env.SEED_OWNER_USERNAME || "owner";
+  const existingSuperAdmin = await prisma.staffUser.findFirst({ where: { isSuperAdmin: true } });
+  if (existingSuperAdmin && existingSuperAdmin.username !== ownerUsername) {
+    throw new Error(`Super Admin already exists as ${existingSuperAdmin.username}.`);
+  }
+  const owner = await prisma.staffUser.upsert({
+    where: { username: ownerUsername },
     create: {
-      username: process.env.SEED_OWNER_USERNAME || "owner",
+      username: ownerUsername,
       displayName: "Chủ quán",
       passwordHash: ownerHash,
       role: "OWNER",
+      isSuperAdmin: true,
     },
-    update: { displayName: "Chủ quán", role: "OWNER", isActive: true },
+    update: { displayName: "Chủ quán", role: "OWNER", isSuperAdmin: true, isActive: true },
   });
-  await prisma.staffUser.upsert({
+  const cashier = await prisma.staffUser.upsert({
     where: { username: process.env.SEED_CASHIER_USERNAME || "cashier" },
     create: {
       username: process.env.SEED_CASHIER_USERNAME || "cashier",
@@ -64,9 +83,9 @@ async function seed() {
       passwordHash: cashierHash,
       role: "CASHIER",
     },
-    update: { displayName: "Thu ngân", role: "CASHIER", isActive: true },
+    update: { isActive: true },
   });
-  await prisma.staffUser.upsert({
+  const kitchen = await prisma.staffUser.upsert({
     where: { username: process.env.SEED_KITCHEN_USERNAME || "kitchen" },
     create: {
       username: process.env.SEED_KITCHEN_USERNAME || "kitchen",
@@ -74,7 +93,17 @@ async function seed() {
       passwordHash: kitchenHash,
       role: "KITCHEN",
     },
-    update: { displayName: "Bếp & pha chế", role: "KITCHEN", isActive: true },
+    update: { isActive: true },
+  });
+  await prisma.staffPermissionAssignment.upsert({
+    where: { staffUserId_permissionCode: { staffUserId: cashier.id, permissionCode: "ORDER" } },
+    create: { staffUserId: cashier.id, permissionCode: "ORDER" },
+    update: {},
+  });
+  await prisma.staffPermissionAssignment.upsert({
+    where: { staffUserId_permissionCode: { staffUserId: kitchen.id, permissionCode: "KITCHEN" } },
+    create: { staffUserId: kitchen.id, permissionCode: "KITCHEN" },
+    update: {},
   });
 
   const branch = await prisma.branch.upsert({
@@ -123,9 +152,6 @@ async function seed() {
     });
   }
 
-  const owner = await prisma.staffUser.findUniqueOrThrow({
-    where: { username: process.env.SEED_OWNER_USERNAME || "owner" },
-  });
   const ingredientSeeds = [
     ["coffee-bean", "Cà phê hạt", "GRAM", 10_000, 2_000, 180],
     ["condensed-milk", "Sữa đặc", "MILLILITER", 15_000, 3_000, 35],

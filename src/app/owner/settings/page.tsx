@@ -5,6 +5,6 @@ import { ShopSettingsScreen } from "@/ui/owner/settings/shop-settings-screen";
 export const metadata = { title: "Cấu hình quán" };
 
 export default async function Page() {
-  await requirePageUser(["OWNER"], "/owner/settings");
+  await requirePageUser(["SUPER_ADMIN"], "/owner/settings");
   return <ShopSettingsScreen settings={await getShopSettings()} />;
 }

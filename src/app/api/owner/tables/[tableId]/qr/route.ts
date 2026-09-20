@@ -8,7 +8,7 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ tableId: string }> },
 ) {
-  const auth = await authorizeRequest(request, ["OWNER"]);
+  const auth = await authorizeRequest(request, ["AUDIT"]);
   if (auth.response) return auth.response;
   const { tableId } = await params;
   const table = await prisma.diningTable.findFirst({

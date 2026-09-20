@@ -7,6 +7,7 @@ import { prisma } from "../../src/lib/db/prisma";
 test("persists Owner menu changes and verifies the seeded login", async (context) => {
   const owner = await prisma.staffUser.findUniqueOrThrow({ where: { username: "owner" } });
   assert.equal(owner.role, "OWNER");
+  assert.equal(owner.isSuperAdmin, true);
   assert.equal(
     await verifyPassword(process.env.SEED_OWNER_PASSWORD || "coffee-owner-local", owner.passwordHash),
     true,

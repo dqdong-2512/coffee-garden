@@ -5,7 +5,7 @@ import { mutationError, rejectInvalidMutation } from "../../_shared";
 export const runtime = "nodejs";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ staffId: string }> }) {
-  const auth = await authorizeRequest(request, ["OWNER"]);
+  const auth = await authorizeRequest(request, ["SUPER_ADMIN"]);
   if (auth.response) return auth.response;
   const invalid = rejectInvalidMutation(request);
   if (invalid) return invalid;

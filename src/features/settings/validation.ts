@@ -1,7 +1,11 @@
 import { z } from "zod";
 
 const displayName = z.string().trim().min(2, "Tên hiển thị phải có ít nhất 2 ký tự.").max(80);
-const role = z.enum(["OWNER", "CASHIER", "KITCHEN"], "Vai trò không hợp lệ.");
+const permission = z.enum(["ORDER", "KITCHEN", "AUDIT"], "Quyền nhân viên không hợp lệ.");
+const permissions = z.array(permission)
+  .min(1, "Nhân viên phải có ít nhất một quyền.")
+  .max(3)
+  .refine((items) => new Set(items).size === items.length, "Danh sách quyền bị trùng.");
 const password = z.string()
   .min(8, "Mật khẩu phải có ít nhất 8 ký tự.")
   .max(128, "Mật khẩu không được dài quá 128 ký tự.")
@@ -14,13 +18,13 @@ export const createStaffSchema = z.object({
     .max(32)
     .regex(/^[a-z0-9._-]+$/, "Tên đăng nhập chỉ dùng chữ thường, số, dấu chấm, gạch dưới hoặc gạch ngang."),
   displayName,
-  role,
+  permissions,
   password,
 });
 
 export const updateStaffSchema = z.object({
   displayName: displayName.optional(),
-  role: role.optional(),
+  permissions: permissions.optional(),
   isActive: z.boolean().optional(),
 }).refine((value) => Object.values(value).some((item) => item !== undefined), {
   message: "Không có thay đổi để lưu.",

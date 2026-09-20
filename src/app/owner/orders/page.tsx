@@ -14,7 +14,7 @@ async function loadOrders() {
 }
 
 export default async function Page() {
-  await requirePageUser(["OWNER"], "/owner/orders");
+  await requirePageUser(["AUDIT"], "/owner/orders");
   const orders = await loadOrders();
   if (orders) return <OrdersScreen orders={orders} />;
   return (

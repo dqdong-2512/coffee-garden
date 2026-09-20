@@ -15,7 +15,7 @@ async function loadOrders() {
 }
 
 export default async function Page() {
-  const user = await requirePageUser(["OWNER", "KITCHEN"], "/kitchen");
+  const user = await requirePageUser(["KITCHEN"], "/kitchen");
   const [orders, shop] = await Promise.all([loadOrders(), getShopSettings()]);
   return (
     <KitchenBoard

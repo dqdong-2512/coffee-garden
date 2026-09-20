@@ -4,7 +4,7 @@ import { authorizeRequest } from "@/lib/auth/authorization";
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
-  const auth = await authorizeRequest(request, ["OWNER", "CASHIER"]);
+  const auth = await authorizeRequest(request, ["ORDER"]);
   if (auth.response) return auth.response;
   try {
     const origin = request.headers.get("origin");

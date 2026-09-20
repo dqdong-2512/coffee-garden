@@ -34,14 +34,14 @@ test("manages staff safely and persists single-shop settings", async (context) =
   const created = await createStaff({
     username,
     displayName: "Nhân viên Step 9",
-    role: "CASHIER",
+    permissions: ["ORDER"],
     password: "initial2026",
   });
   assert.equal(created.username, username);
   assert.equal("passwordHash" in created, false);
 
-  const edited = await updateStaff(created.id, { displayName: "Bếp Step 9", role: "KITCHEN" }, owner.id);
-  assert.equal(edited.role, "KITCHEN");
+  const edited = await updateStaff(created.id, { displayName: "Giám sát Step 9", permissions: ["ORDER", "AUDIT"] }, owner.id);
+  assert.deepEqual(edited.permissions.sort(), ["AUDIT", "ORDER"]);
   const beforeReset = await prisma.staffUser.findUniqueOrThrow({ where: { id: created.id } });
   await resetStaffPassword(created.id, { password: "updated2026" });
   const afterReset = await prisma.staffUser.findUniqueOrThrow({ where: { id: created.id } });
@@ -50,7 +50,7 @@ test("manages staff safely and persists single-shop settings", async (context) =
 
   await assert.rejects(
     () => updateStaff(owner.id, { isActive: false }, owner.id),
-    (error) => error instanceof SettingsError && error.code === "SELF_LOCKOUT",
+    (error) => error instanceof SettingsError && error.code === "SUPER_ADMIN_PROTECTED",
   );
 
   const shop = await updateShopSettings({

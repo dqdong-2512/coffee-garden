@@ -5,6 +5,6 @@ import { PaymentsScreen } from "@/ui/owner/payments/payments-screen";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Payments" };
 export default async function Page() {
-  await requirePageUser(["OWNER"], "/owner/payments");
+  await requirePageUser(["AUDIT"], "/owner/payments");
   return <PaymentsScreen initialOrders={await listPaymentOrders()} />;
 }

@@ -8,7 +8,7 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ categoryId: string }> },
 ) {
-  const auth = await authorizeRequest(request, ["OWNER"]);
+  const auth = await authorizeRequest(request, ["AUDIT"]);
   if (auth.response) return auth.response;
   const invalid = rejectInvalidMutation(request);
   if (invalid) return invalid;

@@ -1,13 +1,20 @@
-import type { StaffRole } from "@/generated/prisma/client";
+import type { StaffPermissionCode } from "@/generated/prisma/client";
 
 export type ManagedStaff = {
   id: string;
   username: string;
   displayName: string;
-  role: StaffRole;
+  isSuperAdmin: boolean;
+  permissions: StaffPermissionCode[];
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+};
+
+export type PermissionDefinition = {
+  code: StaffPermissionCode;
+  name: string;
+  description: string;
 };
 
 export type ShopSettings = {

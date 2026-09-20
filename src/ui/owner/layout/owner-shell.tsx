@@ -37,11 +37,11 @@ export function OwnerShell({
         Skip to content
       </a>
       <aside className="desktop-sidebar">
-        <OwnerSidebar shopName={shopName} />
+        <OwnerSidebar shopName={shopName} user={user} />
       </aside>
       {open && (
         <Modal title="Navigation" drawer onClose={() => setOpen(false)}>
-          <OwnerSidebar shopName={shopName} onNavigate={() => setOpen(false)} />
+          <OwnerSidebar shopName={shopName} user={user} onNavigate={() => setOpen(false)} />
         </Modal>
       )}
       <div className="owner-body">
@@ -73,13 +73,13 @@ export function OwnerShell({
             </button>
             <button
               className="user-button"
-              aria-label="Owner menu"
+              aria-label="Management account menu"
               aria-expanded={panel === "user"}
               onClick={() => setPanel(panel === "user" ? null : "user")}
             >
               <span className="avatar">{initials}</span>
               <span className="user-name">
-                {user.displayName}<small>Owner</small>
+                {user.displayName}<small>{user.isSuperAdmin ? "Super Admin" : "Kiểm toán"}</small>
               </span>
               <ChevronDown size={14} />
             </button>
@@ -88,7 +88,7 @@ export function OwnerShell({
         {panel && (
           <Modal
             title={
-              panel === "notifications" ? "Notifications" : "Owner workspace"
+              panel === "notifications" ? "Notifications" : "Khu vực quản lý"
             }
             onClose={() => setPanel(null)}
           >
@@ -103,7 +103,7 @@ export function OwnerShell({
                 </>
               ) : (
                 <>
-                  <p>{user.displayName} · Owner</p>
+                  <p>{user.displayName} · {user.isSuperAdmin ? "Super Admin" : "Nhân viên kiểm toán"}</p>
                   <p className="muted my-3 text-sm">
                     @{user.username} · {shopName}
                   </p>

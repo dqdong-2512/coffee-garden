@@ -7,7 +7,7 @@ import {
   sessionCookieOptions,
 } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
-import { homeForRole } from "@/lib/auth/authorization";
+import { homeForUser } from "@/lib/auth/authorization";
 
 export const runtime = "nodejs";
 
@@ -27,6 +27,7 @@ export async function POST(request: Request) {
 
     const user = await prisma.staffUser.findUnique({
       where: { username: input.data.username.toLowerCase() },
+      include: { permissionAssignments: { select: { permissionCode: true } } },
     });
     const valid = user?.isActive
       ? await verifyPassword(input.data.password, user.passwordHash)
@@ -38,7 +39,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const fallback = homeForRole(user.role);
+    const fallback = homeForUser({
+      isSuperAdmin: user.isSuperAdmin,
+      permissions: user.permissionAssignments.map((item) => item.permissionCode),
+    });
     const response = NextResponse.json({ redirectTo: safeNextPath(input.data.next, fallback) });
     response.cookies.set(
       SESSION_COOKIE,

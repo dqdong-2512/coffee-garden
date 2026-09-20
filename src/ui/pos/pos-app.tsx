@@ -14,6 +14,7 @@ import {
   Printer,
   Search,
   ShoppingCart,
+  TableProperties,
   Trash2,
 } from "lucide-react";
 import type { AuthenticatedUser } from "@/lib/auth/authorization";
@@ -30,13 +31,15 @@ export function PosApp({
   user,
   catalog,
   initialPaymentOrders,
+  initialTableCode,
 }: {
   user: AuthenticatedUser;
   catalog: PosCatalog;
   initialPaymentOrders: PaymentOrder[];
+  initialTableCode?: string;
 }) {
   const [categoryId, setCategoryId] = useState(catalog.categories[0]?.id ?? "");
-  const [tableCode, setTableCode] = useState(catalog.tables[0]?.code ?? "");
+  const [tableCode, setTableCode] = useState(initialTableCode ?? catalog.tables[0]?.code ?? "");
   const [cart, setCart] = useState<Cart>({});
   const [query, setQuery] = useState("");
   const [note, setNote] = useState("");
@@ -159,8 +162,9 @@ export function PosApp({
       <header className="pos-header">
         <div className="pos-brand"><span><Coffee size={21} /></span><div><strong>{catalog.branch.name}</strong><small>STAFF POS</small></div></div>
         <div className="pos-header-actions">
-          {user.role === "OWNER" && <Link href="/kitchen" className="pos-header-link"><ChefHat size={16} />Bếp</Link>}
-          {user.role === "OWNER" && <Link href="/owner/payments" className="pos-header-link"><ReceiptText size={16} />Đối soát</Link>}
+          <Link href="/staff/tables" className="pos-header-link"><TableProperties size={16} />Chọn bàn</Link>
+          {(user.isSuperAdmin || user.permissions.includes("KITCHEN")) && <Link href="/kitchen" className="pos-header-link"><ChefHat size={16} />Bếp</Link>}
+          {(user.isSuperAdmin || user.permissions.includes("AUDIT")) && <Link href="/owner/payments" className="pos-header-link"><ReceiptText size={16} />Đối soát</Link>}
           <button className="pos-unpaid-button" onClick={() => setPaymentsOpen(true)}><CreditCard size={16} />Chờ thanh toán <b>{unpaid.length}</b></button>
           <span className="pos-user">{user.displayName}</span><LogoutButton compact />
         </div>

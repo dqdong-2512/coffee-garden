@@ -8,7 +8,7 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ orderId: string }> },
 ) {
-  const auth = await authorizeRequest(request, ["OWNER", "KITCHEN"]);
+  const auth = await authorizeRequest(request, ["KITCHEN"]);
   if (auth.response) return auth.response;
   try {
     const origin = request.headers.get("origin");

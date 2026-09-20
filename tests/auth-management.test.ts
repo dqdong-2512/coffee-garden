@@ -15,6 +15,7 @@ import {
   createStaffSchema,
   updateShopSettingsSchema,
 } from "../src/features/settings/validation";
+import { hasAccess, homeForUser, type AuthenticatedUser } from "../src/lib/auth/authorization";
 
 test("hashes staff passwords with a unique salt and verifies them", async () => {
   const first = await hashPassword("coffee-owner-local");
@@ -43,6 +44,23 @@ test("only accepts local redirect paths after login", () => {
   assert.equal(safeNextPath("/owner/products", "/owner/dashboard"), "/owner/products");
   assert.equal(safeNextPath("//evil.example", "/owner/dashboard"), "/owner/dashboard");
   assert.equal(safeNextPath("https://evil.example", "/kitchen"), "/kitchen");
+});
+
+test("combines employee permissions while Super Admin keeps full access", () => {
+  const supervisor: AuthenticatedUser = {
+    id: "11111111-1111-4111-8111-111111111111",
+    username: "dqdong",
+    displayName: "Dương Quí Đồng",
+    role: "OWNER",
+    isSuperAdmin: false,
+    permissions: ["ORDER", "AUDIT"],
+  };
+  assert.equal(hasAccess(supervisor, ["ORDER"]), true);
+  assert.equal(hasAccess(supervisor, ["AUDIT"]), true);
+  assert.equal(hasAccess(supervisor, ["KITCHEN"]), false);
+  assert.equal(hasAccess(supervisor, ["SUPER_ADMIN"]), false);
+  assert.equal(homeForUser(supervisor), "/owner/dashboard");
+  assert.equal(hasAccess({ ...supervisor, isSuperAdmin: true, permissions: [] }, ["SUPER_ADMIN"]), true);
 });
 
 test("normalizes table codes and validates menu prices", () => {
@@ -99,9 +117,11 @@ test("validates cash counts before daily closing", () => {
 
 test("validates staff credentials and shop settings", () => {
   const staff = createStaffSchema.parse({
-    username: " cashier.02 ", displayName: "Thu ngân ca tối", role: "CASHIER", password: "coffee2026",
+    username: " cashier.02 ", displayName: "Thu ngân ca tối", permissions: ["ORDER", "AUDIT"], password: "coffee2026",
   });
   assert.equal(staff.username, "cashier.02");
+  assert.deepEqual(staff.permissions, ["ORDER", "AUDIT"]);
+  assert.equal(createStaffSchema.safeParse({ ...staff, permissions: [] }).success, false);
   assert.equal(createStaffSchema.safeParse({ ...staff, password: "short" }).success, false);
   assert.equal(createStaffSchema.safeParse({ ...staff, username: "Tên Có Dấu" }).success, false);
   assert.equal(updateShopSettingsSchema.safeParse({

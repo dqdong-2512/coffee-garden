@@ -19,10 +19,10 @@ Thiết lập các biến sau trong Vercel. Chỉ cấp chúng cho Production v�
 | `DIRECT_URL` | URL direct dùng cho Prisma migration |
 | `AUTH_SESSION_SECRET` | Secret ngẫu nhiên tối thiểu 32 ký tự |
 | `PUBLIC_APP_URL` | Origin HTTPS công khai, không có path |
-| `SEED_OWNER_USERNAME` | Tên đăng nhập Owner đầu tiên |
-| `SEED_OWNER_PASSWORD` | Mật khẩu Owner khởi tạo |
-| `SEED_CASHIER_USERNAME` | Tên đăng nhập Thu ngân khởi tạo |
-| `SEED_CASHIER_PASSWORD` | Mật khẩu Thu ngân khởi tạo |
+| `SEED_OWNER_USERNAME` | Tên đăng nhập Super Admin duy nhất |
+| `SEED_OWNER_PASSWORD` | Mật khẩu Super Admin khởi tạo |
+| `SEED_CASHIER_USERNAME` | Tên đăng nhập nhân viên Gọi món mẫu |
+| `SEED_CASHIER_PASSWORD` | Mật khẩu nhân viên Gọi món mẫu |
 | `SEED_KITCHEN_USERNAME` | Tên đăng nhập Bếp khởi tạo |
 | `SEED_KITCHEN_PASSWORD` | Mật khẩu Bếp khởi tạo |
 

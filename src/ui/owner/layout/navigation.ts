@@ -55,7 +55,7 @@ export const navigation = [
     group: "Management",
     items: [
       { title: "Tables", slug: "tables", icon: Armchair },
-      { title: "Nhân viên", slug: "staff", icon: Users },
+      { title: "Nhân viên", slug: "staff", icon: Users, superAdminOnly: true },
     ],
   },
   {
@@ -77,6 +77,6 @@ export const navigation = [
   },
   {
     group: "Settings",
-    items: [{ title: "Cấu hình quán", slug: "settings", icon: Settings }],
+    items: [{ title: "Cấu hình quán", slug: "settings", icon: Settings, superAdminOnly: true }],
   },
 ];

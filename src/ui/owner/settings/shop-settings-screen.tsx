@@ -41,7 +41,7 @@ export function ShopSettingsScreen({ settings }: { settings: ShopSettings }) {
   }
 
   return <>
-    <PageHeader title="Cấu hình quán" description="Thông tin dùng trên menu, khu vực Owner và hóa đơn ở bước tiếp theo." />
+    <PageHeader title="Cấu hình quán" description="Thông tin dùng trên menu, khu vực quản lý và hóa đơn." />
     <div className="settings-grid">
       <Card>
         <CardHeader title="Thông tin kinh doanh" subtitle="Áp dụng cho chi nhánh MAIN của mô hình một quán" action={<Building2 size={20} />} />

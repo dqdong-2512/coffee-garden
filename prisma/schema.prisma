@@ -27,6 +27,12 @@ enum StaffRole {
   CASHIER
 }
 
+enum StaffPermissionCode {
+  ORDER
+  KITCHEN
+  AUDIT
+}
+
 enum PaymentMethod {
   CASH
   BANK_TRANSFER
@@ -67,6 +73,7 @@ model StaffUser {
   passwordHash String
   sessionVersion Int     @default(1)
   role         StaffRole
+  isSuperAdmin Boolean   @default(false)
   isActive     Boolean   @default(true)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
@@ -74,8 +81,28 @@ model StaffUser {
   expenses     Expense[]
   stockMovements StockMovement[]
   dailyClosures DailyClosure[]
+  permissionAssignments StaffPermissionAssignment[]
 
   @@index([role, isActive])
+}
+
+model Permission {
+  code         StaffPermissionCode @id
+  name         String
+  description  String
+  displayOrder Int                 @default(0)
+  assignments StaffPermissionAssignment[]
+}
+
+model StaffPermissionAssignment {
+  staffUserId   String              @db.Uuid
+  permissionCode StaffPermissionCode
+  assignedAt    DateTime            @default(now())
+  staffUser     StaffUser           @relation(fields: [staffUserId], references: [id], onDelete: Cascade)
+  permission    Permission          @relation(fields: [permissionCode], references: [code], onDelete: Restrict)
+
+  @@id([staffUserId, permissionCode])
+  @@index([permissionCode])
 }
 
 model Branch {

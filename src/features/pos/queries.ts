@@ -1,5 +1,25 @@
 import { prisma } from "@/lib/db/prisma";
-import type { PaymentOrder, PosCatalog } from "./types";
+import type { PaymentOrder, PosCatalog, StaffTableDirectory } from "./types";
+
+export async function getStaffTableDirectory(): Promise<StaffTableDirectory | null> {
+  const branch = await prisma.branch.findUnique({
+    where: { code: "MAIN", isActive: true },
+    select: {
+      id: true,
+      name: true,
+      diningTables: {
+        where: { isActive: true },
+        orderBy: { code: "asc" },
+        select: { id: true, code: true, name: true },
+      },
+    },
+  });
+  if (!branch) return null;
+  return {
+    branch: { id: branch.id, name: branch.name },
+    tables: branch.diningTables,
+  };
+}
 
 export async function getPosCatalog(): Promise<PosCatalog | null> {
   const branch = await prisma.branch.findUnique({

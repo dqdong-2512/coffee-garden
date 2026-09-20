@@ -5,7 +5,7 @@ import { mutationError, rejectInvalidMutation } from "../_shared";
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
-  const auth = await authorizeRequest(request, ["OWNER"]);
+  const auth = await authorizeRequest(request, ["AUDIT"]);
   if (auth.response) return auth.response;
   const invalid = rejectInvalidMutation(request);
   if (invalid) return invalid;

@@ -10,7 +10,7 @@ export default async function OwnerLayout({
   children: React.ReactNode;
 }) {
   const [user, shop] = await Promise.all([
-    requirePageUser(["OWNER"], "/owner/dashboard"),
+    requirePageUser(["AUDIT"], "/owner/dashboard"),
     getShopSettings(),
   ]);
   return <OwnerShell user={user} shopName={shop.name}>{children}</OwnerShell>;

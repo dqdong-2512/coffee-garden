@@ -1,4 +1,4 @@
-import { Prisma } from "@/generated/prisma/client";
+import { Prisma, type StaffPermissionCode, type StaffRole } from "@/generated/prisma/client";
 import { hashPassword } from "@/lib/auth/password";
 import { prisma } from "@/lib/db/prisma";
 import { mapStaff, staffSelect } from "./queries";
@@ -23,6 +23,12 @@ function rethrow(error: unknown): never {
   throw error;
 }
 
+function primaryRole(permissions: StaffPermissionCode[]): StaffRole {
+  if (permissions.includes("AUDIT")) return "OWNER";
+  if (permissions.includes("KITCHEN") && !permissions.includes("ORDER")) return "KITCHEN";
+  return "CASHIER";
+}
+
 export async function createStaff(raw: unknown) {
   const input = createStaffSchema.parse(raw);
   try {
@@ -30,8 +36,11 @@ export async function createStaff(raw: unknown) {
       data: {
         username: input.username,
         displayName: input.displayName,
-        role: input.role,
+        role: primaryRole(input.permissions),
         passwordHash: await hashPassword(input.password),
+        permissionAssignments: {
+          create: input.permissions.map((permissionCode) => ({ permissionCode })),
+        },
       },
       select: staffSelect,
     });
@@ -45,27 +54,38 @@ export async function updateStaff(id: string, raw: unknown, actorId: string) {
   const input = updateStaffSchema.parse(raw);
   try {
     return await prisma.$transaction(async (transaction) => {
-      await transaction.$queryRaw`SELECT pg_advisory_xact_lock(hashtext('staff-owner-management'))::text`;
-      const current = await transaction.staffUser.findUnique({ where: { id } });
+      await transaction.$queryRaw`SELECT pg_advisory_xact_lock(hashtext('staff-permission-management'))::text`;
+      const current = await transaction.staffUser.findUnique({
+        where: { id },
+        include: { permissionAssignments: { select: { permissionCode: true } } },
+      });
       if (!current) throw new SettingsError("STAFF_NOT_FOUND", "Không tìm thấy tài khoản nhân viên.", 404);
-      if (id === actorId && (input.isActive === false || (input.role && input.role !== "OWNER"))) {
-        throw new SettingsError("SELF_LOCKOUT", "Bạn không thể khóa hoặc hạ quyền tài khoản đang đăng nhập.", 409);
+      if (current.isSuperAdmin && (input.isActive === false || input.permissions !== undefined)) {
+        throw new SettingsError(
+          "SUPER_ADMIN_PROTECTED",
+          "Không thể khóa hoặc thay đổi quyền của tài khoản Super Admin duy nhất.",
+          409,
+        );
       }
-      const removesActiveOwner = current.role === "OWNER" && current.isActive &&
-        (input.isActive === false || (input.role && input.role !== "OWNER"));
-      if (removesActiveOwner) {
-        const activeOwners = await transaction.staffUser.count({ where: { role: "OWNER", isActive: true } });
-        if (activeOwners <= 1) {
-          throw new SettingsError("LAST_OWNER", "Quán phải luôn có ít nhất một tài khoản Owner hoạt động.", 409);
-        }
+      if (id === actorId && input.isActive === false) {
+        throw new SettingsError("SELF_LOCKOUT", "Bạn không thể khóa tài khoản đang đăng nhập.", 409);
       }
-      const roleChanged = input.role !== undefined && input.role !== current.role;
+      const currentPermissions = current.permissionAssignments.map((item) => item.permissionCode).sort();
+      const nextPermissions = input.permissions?.slice().sort();
+      const permissionsChanged = nextPermissions !== undefined &&
+        nextPermissions.join(",") !== currentPermissions.join(",");
       const deactivated = input.isActive === false && current.isActive;
       const row = await transaction.staffUser.update({
         where: { id },
         data: {
-          ...input,
-          sessionVersion: roleChanged || deactivated ? { increment: 1 } : undefined,
+          displayName: input.displayName,
+          isActive: input.isActive,
+          role: input.permissions ? primaryRole(input.permissions) : undefined,
+          permissionAssignments: input.permissions ? {
+            deleteMany: {},
+            create: input.permissions.map((permissionCode) => ({ permissionCode })),
+          } : undefined,
+          sessionVersion: permissionsChanged || deactivated ? { increment: 1 } : undefined,
         },
         select: staffSelect,
       });

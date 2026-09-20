@@ -7,6 +7,11 @@ export type PosCatalog = {
   tables: Array<{ id: string; code: string; name: string }>;
 };
 
+export type StaffTableDirectory = {
+  branch: { id: string; name: string };
+  tables: Array<{ id: string; code: string; name: string }>;
+};
+
 export type PaymentOrder = {
   id: string;
   orderNo: string;

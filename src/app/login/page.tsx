@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getPageUser, homeForRole } from "@/lib/auth/authorization";
+import { getPageUser, homeForUser } from "@/lib/auth/authorization";
 import { LoginForm } from "@/ui/auth/login-form";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +11,7 @@ export default async function Page({
   searchParams: Promise<{ next?: string }>;
 }) {
   const user = await getPageUser();
-  if (user) redirect(homeForRole(user.role));
+  if (user) redirect(homeForUser(user));
   const { next } = await searchParams;
   return <LoginForm nextPath={next} />;
 }
